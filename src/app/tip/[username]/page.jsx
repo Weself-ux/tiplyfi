@@ -55,7 +55,6 @@ export default function TipPage({ params }) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMode, setSuccessMode] = useState("");
   const [sentAmount, setSentAmount] = useState("");
-  const [fanCoversFee, setFanCoversFee] = useState(false);
   const [supportTiplyfi, setSupportTiplyfi] = useState(false);
 
   useEffect(() => {
@@ -82,8 +81,8 @@ export default function TipPage({ params }) {
 
   // Creator's setting decides the default; the fan can always opt to cover it.
   const routerAddress = creator?.tipRouterAddress || "";
-  const creatorWantsFanToPay = creator?.feeMode === "fan_pays";
-  const feePaidByFan = creatorWantsFanToPay || fanCoversFee;
+  // The creator's setting is the only input. Fans don't choose who pays.
+  const feePaidByFan = creator?.feeMode === "fan_pays";
 
   const validAmount =
     finalAmount && !isNaN(finalAmount) && Number(finalAmount) > 0;
@@ -454,21 +453,7 @@ export default function TipPage({ params }) {
                 <span>${weiToDisplay(amounts.valueWei)}</span>
               </div>
 
-              {!creatorWantsFanToPay && (
-                <label className="flex items-start gap-2 mt-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={fanCoversFee}
-                    onChange={(e) => setFanCoversFee(e.target.checked)}
-                    className="mt-0.5 accent-[#7c3aed]"
-                  />
-                  <span className="text-[#6B7280] leading-snug">
-                    Cover the fee so @{creator.username} receives the full amount
-                  </span>
-                </label>
-              )}
-
-              <label className="flex items-start gap-2 mt-2 cursor-pointer">
+              <label className="flex items-start gap-2 mt-3 pt-3 border-t border-[#E5E7EB] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={supportTiplyfi}
@@ -476,7 +461,7 @@ export default function TipPage({ params }) {
                   className="mt-0.5 accent-[#7c3aed]"
                 />
                 <span className="text-[#6B7280] leading-snug">
-                  Add ${weiToDisplay(amounts.feeWei)} to support Tiplyfi
+                  Add ${weiToDisplay(amounts.platformTipWei)} to support Tiplyfi
                 </span>
               </label>
             </div>
