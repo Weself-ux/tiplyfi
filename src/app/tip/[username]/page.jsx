@@ -56,6 +56,10 @@ export default function TipPage({ params }) {
   const [successMode, setSuccessMode] = useState("");
   const [sentAmount, setSentAmount] = useState("");
   const [supportTiplyfi, setSupportTiplyfi] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("impersonation");
+  const [reportDetail, setReportDetail] = useState("");
+  const [reportSent, setReportSent] = useState(false);
 
   useEffect(() => {
     flushTipQueue();
@@ -81,6 +85,7 @@ export default function TipPage({ params }) {
 
   // Creator's setting decides the default; the fan can always opt to cover it.
   const routerAddress = creator?.tipRouterAddress || "";
+  const underReview = creator?.status === "under_review";
   // The creator's setting is the only input. Fans don't choose who pays.
   const feePaidByFan = creator?.feeMode === "fan_pays";
 
@@ -90,7 +95,22 @@ export default function TipPage({ params }) {
     ? computeTipAmounts(finalAmount, feePaidByFan, supportTiplyfi)
     : null;
 
-   async function handleWalletTip() {
+   async function submitReport() {
+    try {
+      await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          reason: reportReason,
+          detail: reportDetail || null,
+        }),
+      });
+    } catch {}
+    setReportSent(true);
+  }
+
+  async function handleWalletTip() {
     if (!wallet) { setStatus("Connect your wallet first."); return; }
     if (!amounts) { setStatus("Enter a valid amount."); return; }
 
@@ -293,6 +313,13 @@ export default function TipPage({ params }) {
 
         <div className="p-6">
 
+          {underReview && (
+            <div className="mb-5 px-4 py-3 text-sm text-[#92400E] bg-[#FFFBEB] border border-[#FDE68A] rounded-xl">
+              This page is being reviewed. Tipping is paused until the review is
+              complete.
+            </div>
+          )}
+
           {mode === "sponsored" && (
             <div className="flex items-start gap-3 bg-[#F5F3FF] border border-[#DDD6FE] rounded-xl p-3 mb-5">
               <Zap size={16} className="text-[#7c3aed] flex-shrink-0 mt-0.5" />
@@ -476,7 +503,7 @@ export default function TipPage({ params }) {
            {mode === "wallet" ? (
             <button
               onClick={handleWalletTip}
-              disabled={loading || !wallet}
+              disabled={loading || !wallet || underReview}
               className="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               {loading ? (
@@ -490,7 +517,7 @@ export default function TipPage({ params }) {
           ) : (
             <button
               onClick={handleSponsoredTip}
-              disabled={loading}
+              disabled={loading || underReview}
               className="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               {loading ? (
@@ -523,7 +550,103 @@ export default function TipPage({ params }) {
         </p>
       </div>
 
-       {showSuccess && (
+       <div className="mt-3 text-center">
+        <button
+          onClick={() => setReportOpen(true)}
+          className="text-[11px] text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+        >
+          Report this page
+        </button>
+      </div>
+
+      {reportOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setReportOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[380px] p-5">
+            {reportSent ? (
+              <div className="text-center py-4">
+                <p className="text-sm font-semibold text-[#111827] mb-1">
+                  Thanks for letting us know
+                </p>
+                <p className="text-xs text-[#6B7280] mb-5">
+                  We review every report.
+                </p>
+                <button
+                  onClick={() => {
+                    setReportOpen(false);
+                    setReportSent(false);
+                    setReportDetail("");
+                  }}
+                  className="w-full py-2.5 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-xl hover:text-[#111827] transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-base font-semibold text-[#111827] mb-1">
+                  Report this page
+                </h3>
+                <p className="text-xs text-[#6B7280] mb-4">
+                  Tell us what's wrong. You don't need an account.
+                </p>
+
+                <div className="space-y-2 mb-4">
+                  {[
+                    ["impersonation", "Pretending to be someone else"],
+                    ["illegal", "Illegal or harmful content"],
+                    ["spam", "Spam or scam"],
+                    ["other", "Something else"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      onClick={() => setReportReason(value)}
+                      className={`w-full text-left px-3 py-2.5 text-sm rounded-xl border-2 transition-all ${
+                        reportReason === value
+                          ? "border-[#7c3aed] bg-[#F5F3FF] text-[#7c3aed]"
+                          : "border-[#E5E7EB] text-[#374151] hover:border-[#C4B5FD]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={reportDetail}
+                  onChange={(e) => setReportDetail(e.target.value)}
+                  placeholder="Anything else we should know? (optional)"
+                  maxLength={500}
+                  rows={3}
+                  className="w-full px-3 py-2.5 text-sm text-[#111827] bg-white border border-[#E5E7EB] rounded-xl outline-none focus:ring-2 focus:ring-[#7c3aed] resize-none mb-3"
+                />
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setReportOpen(false)}
+                    className="flex-1 py-2.5 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-xl hover:text-[#111827] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitReport}
+                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#7c3aed] rounded-xl hover:bg-[#6d28d9] transition-colors"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showSuccess && (
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
           style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}

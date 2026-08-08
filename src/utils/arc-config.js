@@ -38,6 +38,7 @@ export function weiToDisplay(wei) {
 /// fanCoversFee = true  -> creator receives the full amount, fan pays extra
 /// fanCoversFee = false -> fee comes out of the amount, creator receives less
 const SCALE = 1_000_000_000_000n; // 18-dec native -> 6-dec ERC-20
+const PLATFORM_TIP_BPS = 200n; // 2%, fixed and independent of the platform fee
 const CENT = 10_000_000_000_000_000n; // 0.01 USDC
 
 /// The contract rejects any amount that doesn't convert to 6 decimals
@@ -56,7 +57,9 @@ function ceilToScale(wei) {
 export function computeTipAmounts(amount, fanCoversFee, addPlatformTip = false) {
   const base = snapToCent(usdcToWei(amount));
   const feeWei = ceilToScale((base * FEE_BPS) / BPS);
-  const platformTipWei = addPlatformTip ? feeWei : 0n;
+  const platformTipWei = addPlatformTip
+    ? ceilToScale((base * PLATFORM_TIP_BPS) / BPS)
+    : 0n;
 
   const tipTotal = fanCoversFee ? base + feeWei : base;
   const netWei = fanCoversFee ? base : base - feeWei;

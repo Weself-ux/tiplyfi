@@ -9,7 +9,7 @@ export async function loader({ request, params }) {
     }
 
     const rows = await sql(
-      "SELECT username, wallet_address, full_name, created_at, fee_mode FROM users WHERE username = $1",
+      "SELECT username, wallet_address, full_name, created_at, fee_mode, status FROM users WHERE username = $1",
       [username.toLowerCase()],
     );
 
@@ -18,7 +18,11 @@ export async function loader({ request, params }) {
     }
 
     const user = rows[0];
+    if (user.status === "unpublished") {
+      return Response.json({ error: "Creator not found." }, { status: 404 });
+    }
     return Response.json({
+      status: user.status || "active",
       username: user.username,
       walletAddress: user.wallet_address,
       displayName: user.full_name,

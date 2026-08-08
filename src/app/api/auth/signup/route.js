@@ -87,6 +87,46 @@ export async function action({ request }) {
       );
     }
 
+    // Server-side handle protection. The client check can be bypassed.
+    const held = await sql(
+      "SELECT kind, claim_token, claimed_by FROM reserved_handles WHERE handle = $1",
+      [username.toLowerCase()],
+    );
+    if (held.length > 0) {
+      const h = held[0];
+      const claimable =
+        h.kind === "reserved" &&
+        !h.claimed_by &&
+        h.claim_token &&
+        body.claimToken === h.claim_token;
+      if (!claimable) {
+        return Response.json(
+          { error: "This username isn't available." },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Server-side handle protection. The client check can be bypassed.
+    const heldHandle = await sql(
+      "SELECT kind, claim_token, claimed_by FROM reserved_handles WHERE handle = $1",
+      [username.toLowerCase()],
+    );
+    if (heldHandle.length > 0) {
+      const h = heldHandle[0];
+      const claimable =
+        h.kind === "reserved" &&
+        !h.claimed_by &&
+        h.claim_token &&
+        body.claimToken === h.claim_token;
+      if (!claimable) {
+        return Response.json(
+          { error: "This username isn't available." },
+          { status: 409 },
+        );
+      }
+    }
+
     // Hash password with argon2 (industry standard)
     const passwordHash = await argon2.hash(password, {
       type: argon2.argon2id,
