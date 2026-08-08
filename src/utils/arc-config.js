@@ -37,14 +37,37 @@ export function weiToDisplay(wei) {
 /// Splits a tip into the three figures the contract needs.
 /// fanCoversFee = true  -> creator receives the full amount, fan pays extra
 /// fanCoversFee = false -> fee comes out of the amount, creator receives less
-export function computeTipAmounts(amount, fanCoversFee) {
-  const base = usdcToWei(amount);
-  if (fanCoversFee) {
-    const feeWei = (base * FEE_BPS) / BPS;
-    return { valueWei: base + feeWei, feeWei, netWei: base };
-  }
-  const feeWei = (base * FEE_BPS) / BPS;
-  return { valueWei: base, feeWei, netWei: base - feeWei };
+const SCALE = 1_000_000_000_000n; // 18-dec native -> 6-dec ERC-20
+const CENT = 10_000_000_000_000_000n; // 0.01 USDC
+
+/// The contract rejects any amount that doesn't convert to 6 decimals
+/// exactly, so every figure here is snapped before it leaves the browser.
+function snapToCent(wei) {
+  return (wei / CENT) * CENT;
+}
+
+/// Rounds UP so the fee can never fall below the contract's floor check.
+function ceilToScale(wei) {
+  return ((wei + SCALE - 1n) / SCALE) * SCALE;
+}
+
+/// @param fanCoversFee   fan pays the fee on top instead of it coming out
+/// @param addPlatformTip fan's voluntary gift to Tiplyfi, equal to the fee
+export function computeTipAmounts(amount, fanCoversFee, addPlatformTip = false) {
+  const base = snapToCent(usdcToWei(amount));
+  const feeWei = ceilToScale((base * FEE_BPS) / BPS);
+  const platformTipWei = addPlatformTip ? feeWei : 0n;
+
+  const tipTotal = fanCoversFee ? base + feeWei : base;
+  const netWei = fanCoversFee ? base : base - feeWei;
+
+  return {
+    valueWei: tipTotal + platformTipWei,
+    tipTotalWei: tipTotal,
+    feeWei,
+    platformTipWei,
+    netWei,
+  };
 }
 
 /// Send a tip through TipRouter. One transaction, no approval.
@@ -53,6 +76,7 @@ export async function tipViaRouter({
   routerAddress,
   valueWei,
   feeWei,
+  platformTipWei = 0n,
   message,
   provider,
 }) {
@@ -63,7 +87,7 @@ export async function tipViaRouter({
 
   const { ethers } = await import("ethers");
   const iface = new ethers.Interface([
-    "function tip(address creator, uint256 feeAmount, bytes32 messageHash)",
+    "function tip(address creator, uint256 feeAmount, uint256 platformTip, bytes32 messageHash)",
   ]);
   const messageHash = message
     ? ethers.keccak256(ethers.toUtf8Bytes(message))
@@ -72,6 +96,7 @@ export async function tipViaRouter({
   const data = iface.encodeFunctionData("tip", [
     creatorAddress,
     feeWei,
+    platformTipWei,
     messageHash,
   ]);
 

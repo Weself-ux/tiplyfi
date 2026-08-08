@@ -105,7 +105,7 @@ function FeeToggle() {
     <div className="flex items-start justify-between gap-6">
       <div className="flex-1">
         <p className="text-sm font-medium text-[#111827] mb-0.5">
-          Supporters cover the fee
+          {fanPays ? "Supporter covers the fee" : "Recommended"}
         </p>
         <p className="text-sm text-[#6B7280]">
           {fanPays
@@ -249,8 +249,23 @@ export default function SettingsPage() {
           <SoonRow label="Delete account" />
         </Section>
 
-        <Section title="Payments">
+        <Section title="Your page">
+          <SoonRow label="Profile photo and bio" />
+          <SoonRow label="Category" />
+          <SoonRow label="Social links" />
+          <SoonRow label="Custom thank-you message" />
+          <SoonRow label="Accent colour and dark mode" />
+          <SoonRow label="Short link (tiplyfi.app/you)" />
+        </Section>
+
+        <Section title="Fee">
           <FeeToggle />
+          <div className="mt-5 pt-2 border-t border-[#F3F4F6]">
+            <SoonRow label="Withdraw to bank account" />
+            <SoonRow label="Accept card and bank tips" />
+            <SoonRow label="Accept tips from any chain" />
+            <SoonRow label="Accept tips in any token" />
+          </div>
         </Section>
 
         <Section title="Preferences">
@@ -292,10 +307,33 @@ export default function SettingsPage() {
           <SoonRow label="Linked accounts" />
         </Section>
 
+        <Section title="Products">
+          <SoonRow label="Tip-gated downloads" />
+          <SoonRow label="Supporter-only posts" />
+        </Section>
+
+        <Section title="Engagement">
+          <SoonRow label="Monthly goal" />
+          <SoonRow label="Tip milestones" />
+          <SoonRow label="Top supporter badge" />
+          <SoonRow label="Live tip feed on your page" />
+          <SoonRow label="Leaderboards" />
+          <SoonRow label="Supporter badges" />
+          <SoonRow label="Reply to supporters" />
+          <SoonRow label="Share a tip to social" />
+        </Section>
+
+        <Section title="Automation">
+          <SoonRow label="Auto-save a share of every tip" />
+          <SoonRow label="Auto-withdraw above a threshold" />
+        </Section>
+
         <Section title="Integrations">
           <SoonRow label="Embedded tip widget" />
           <SoonRow label="Recurring tips" />
           <SoonRow label="Tip split" />
+          <SoonRow label="Live stream mode" />
+          <SoonRow label="Creator API" />
         </Section>
       </div>
     </div>

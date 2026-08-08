@@ -56,6 +56,7 @@ export default function TipPage({ params }) {
   const [successMode, setSuccessMode] = useState("");
   const [sentAmount, setSentAmount] = useState("");
   const [fanCoversFee, setFanCoversFee] = useState(false);
+  const [supportTiplyfi, setSupportTiplyfi] = useState(false);
 
   useEffect(() => {
     flushTipQueue();
@@ -87,7 +88,7 @@ export default function TipPage({ params }) {
   const validAmount =
     finalAmount && !isNaN(finalAmount) && Number(finalAmount) > 0;
   const amounts = validAmount
-    ? computeTipAmounts(finalAmount, feePaidByFan)
+    ? computeTipAmounts(finalAmount, feePaidByFan, supportTiplyfi)
     : null;
 
    async function handleWalletTip() {
@@ -143,6 +144,7 @@ export default function TipPage({ params }) {
         ? await tipViaRouter({
             creatorAddress: creator.walletAddress,
             routerAddress,
+            platformTipWei: amounts.platformTipWei,
             valueWei: amounts.valueWei,
             feeWei: amounts.feeWei,
             message: message || null,
@@ -158,6 +160,7 @@ export default function TipPage({ params }) {
       setShowSuccess(true);
       setSentAmount(netUsdc);
       setAmount("5"); setCustomAmount(""); setMessage(""); setStatus("");
+      setSupportTiplyfi(false);
     } catch (err) {
       setStatus("Error: " + err.message);
     } finally {
@@ -438,6 +441,14 @@ export default function TipPage({ params }) {
                   ${weiToDisplay(amounts.feeWei)}
                 </span>
               </div>
+              {supportTiplyfi && (
+                <div className="flex justify-between text-[#6B7280] mb-2">
+                  <span>Support Tiplyfi</span>
+                  <span className="text-[#111827] font-medium">
+                    ${weiToDisplay(amounts.platformTipWei)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between pt-2 border-t border-[#E5E7EB] font-semibold text-[#111827]">
                 <span>You pay</span>
                 <span>${weiToDisplay(amounts.valueWei)}</span>
@@ -456,6 +467,18 @@ export default function TipPage({ params }) {
                   </span>
                 </label>
               )}
+
+              <label className="flex items-start gap-2 mt-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={supportTiplyfi}
+                  onChange={(e) => setSupportTiplyfi(e.target.checked)}
+                  className="mt-0.5 accent-[#7c3aed]"
+                />
+                <span className="text-[#6B7280] leading-snug">
+                  Add ${weiToDisplay(amounts.feeWei)} to support Tiplyfi
+                </span>
+              </label>
             </div>
           )}
 
