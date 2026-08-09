@@ -26,7 +26,6 @@ export default defineConfig({
     nodePolyfills({
       // Circle's Web SDK needs Node built-ins that browsers lack.
       // Scoped deliberately: a blanket polyfill reshapes the module graph,
-      // which has broken this build before.
       include: ['buffer', 'crypto', 'stream', 'util'],
       globals: { Buffer: true, global: true, process: true },
     }),

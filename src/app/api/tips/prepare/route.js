@@ -22,6 +22,7 @@ export async function action({ request }) {
       amountUsdc,
       grossUsdc,
       feeUsdc,
+      platformTipUsdc,
       message,
     } = body;
 
@@ -43,8 +44,8 @@ export async function action({ request }) {
     // Written BEFORE the transaction is sent, so the message survives
     // any failure between here and confirmation.
     const result = await sql(
-      `INSERT INTO tips (creator_username, creator_address, tipper_address, amount, amount_usdc, gross_usdc, fee_usdc, message, client_ref, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
+      `INSERT INTO tips (creator_username, creator_address, tipper_address, amount, amount_usdc, gross_usdc, fee_usdc, platform_tip_usdc, message, client_ref, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
        ON CONFLICT (client_ref) DO UPDATE SET client_ref = EXCLUDED.client_ref
        RETURNING id`,
       [
@@ -55,6 +56,7 @@ export async function action({ request }) {
         usdc,
         Number(grossUsdc ?? usdc),
         Number(feeUsdc ?? 0),
+        Number(platformTipUsdc ?? 0),
         message ? String(message).slice(0, 200) : null,
         clientRef,
       ],

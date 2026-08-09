@@ -123,7 +123,10 @@ export default function TipPage({ params }) {
 
     const routed = Boolean(routerAddress);
     const netUsdc = routed ? weiToDisplay(amounts.netWei) : finalAmount;
-    const grossUsdc = routed ? weiToDisplay(amounts.valueWei) : finalAmount;
+    // The Tipped event reports the tip only — the platform tip is separate,
+    // so verification must compare against tipTotal, not the full debit.
+    const grossUsdc = routed ? weiToDisplay(amounts.tipTotalWei) : finalAmount;
+    const platformTipUsdc = routed ? weiToDisplay(amounts.platformTipWei) : "0";
     const feeUsdc = routed ? weiToDisplay(amounts.feeWei) : "0";
 
     let tipId = null;
@@ -146,6 +149,7 @@ export default function TipPage({ params }) {
             amountUsdc: parseFloat(netUsdc),
             grossUsdc: parseFloat(grossUsdc),
             feeUsdc: parseFloat(feeUsdc),
+            platformTipUsdc: parseFloat(platformTipUsdc),
             message: message || null,
           }),
         });

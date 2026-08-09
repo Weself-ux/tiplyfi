@@ -25,7 +25,7 @@ export async function action({ request }) {
     }
 
     const cols =
-      "id, creator_username, creator_address, amount, amount_usdc, gross_usdc, status, tx_hash";
+      "id, creator_username, creator_address, amount, amount_usdc, gross_usdc, platform_tip_usdc, status, tx_hash";
     const rows = tipId
       ? await sql(`SELECT ${cols} FROM tips WHERE id = $1`, [tipId])
       : await sql(`SELECT ${cols} FROM tips WHERE client_ref = $1`, [clientRef]);
@@ -77,7 +77,7 @@ export async function action({ request }) {
       creatorUsername: tip.creator_username,
       tipperAddress: verification.from,
       netUsdc: verification.amountUsdc,
-      platformTipUsdc: 0,
+      platformTipUsdc: Number(tip.platform_tip_usdc) || 0,
       txHash,
     });
 

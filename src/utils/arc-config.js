@@ -14,9 +14,9 @@ export const ARC_EXPLORER = "https://testnet.arcscan.app";
 // ─── TipRouter ───────────────────────────────────────────────────────────────
 // Empty string = not configured; the caller falls back to a direct transfer.
 // Supplied by the server via /api/user/:username so the address can change
-// without a rebuild. The VITE_ fallback is kept for local development.
-export const TIP_ROUTER_ADDRESS =
-  import.meta.env.VITE_TIP_ROUTER_ADDRESS || "";
+// without a rebuild. This build's envPrefix is NEXT_PUBLIC_, so no VITE_
+// variable is ever exposed to the client.
+export const TIP_ROUTER_ADDRESS = "";
 
 export const FEE_BPS = 600n; // 6%
 const BPS = 10_000n;
