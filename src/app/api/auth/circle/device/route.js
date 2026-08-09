@@ -24,6 +24,11 @@ export async function action({ request }) {
     return Response.json(tokens);
   } catch (err) {
     console.error("Circle device token error:", err);
-    return Response.json({ error: "Could not start sign-in." }, { status: 500 });
+    // Temporary: surfaces the Circle error so we can diagnose without
+    // Vercel log access. Remove once sign-in is working.
+    return Response.json(
+      { error: "Could not start sign-in.", detail: err.message },
+      { status: 500 },
+    );
   }
 }

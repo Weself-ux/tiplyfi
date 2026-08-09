@@ -80,7 +80,9 @@ export async function startGoogleLogin(sdk) {
     body: JSON.stringify({ deviceId }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Could not start sign-in.");
+  if (!res.ok) {
+    throw new Error(data.detail || data.error || "Could not start sign-in.");
+  }
 
   write(STORE.deviceToken, data.deviceToken);
   write(STORE.deviceEncryptionKey, data.deviceEncryptionKey);
