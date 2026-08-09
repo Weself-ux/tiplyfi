@@ -42,7 +42,9 @@ function config() {
       deviceEncryptionKey: read(STORE.deviceEncryptionKey),
       google: {
         clientId,
-        redirectUri: window.location.origin,
+        // Google returns here, so it must be the page that handles the
+        // callback — not the origin, where nothing is listening.
+        redirectUri: `${window.location.origin}/signup`,
         selectAccountPrompt: true,
       },
     },
