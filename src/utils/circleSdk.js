@@ -1,73 +1,112 @@
 // Circle User-Controlled Wallets — browser SDK.
 // Loaded dynamically: the SDK touches window at import time and must never
 // enter the SSR bundle.
+//
+// ONE instance per page load. getDeviceId() opens an invisible modal, so a
+// second instance calling it clobbers the first and the handshake never
+// completes. Circle's docs are explicit about this.
 
 let sdkPromise = null;
+let pendingLogin = null;
 
-const CONFIG = () => ({
-  appSettings: {
-    appId: import.meta.env.NEXT_PUBLIC_CIRCLE_APP_ID || "",
-  },
-  loginConfigs: {
-    google: {
-      clientId: import.meta.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID || "",
-      redirectUri: window.location.origin,
+function readConfig() {
+  const appId = import.meta.env.NEXT_PUBLIC_CIRCLE_APP_ID || "";
+  const googleClientId = import.meta.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID || "";
+
+  if (!appId) throw new Error("Circle App ID is not configured.");
+  if (!googleClientId) throw new Error("Google client ID is not configured.");
+
+  return {
+    appSettings: { appId },
+    loginConfigs: {
+      google: { clientId: googleClientId, redirectUri: window.location.origin },
     },
-  },
-});
+  };
+}
 
-/// One SDK instance per page load. getDeviceId() is called immediately —
-/// without it, execute() fails silently with no error.
-export async function getSdk() {
+async function initSdk() {
+  const { W3SSdk } = await import("@circle-fin/w3s-pw-web-sdk");
+
+  const sdk = new W3SSdk({
+    configs: readConfig(),
+    // One callback for the instance; each login attempt parks its resolver
+    // here rather than constructing a second SDK.
+    socialLoginCompleteCallback: (error, result) => {
+      if (!pendingLogin) return;
+      const { resolve, reject } = pendingLogin;
+      pendingLogin = null;
+
+      if (error) {
+        reject(new Error(error.message || "Sign-in was cancelled."));
+        return;
+      }
+      resolve({
+        userToken: result?.userToken,
+        encryptionKey: result?.encryptionKey,
+        provider: result?.oauthInfo?.provider || "google",
+        socialUserUUID: result?.oauthInfo?.socialUserUUID || null,
+        email: result?.oauthInfo?.socialUserInfo?.email || null,
+        name: result?.oauthInfo?.socialUserInfo?.name || null,
+      });
+    },
+  });
+
+  // Must finish before performLogin, and must never overlap with it.
+  await sdk.getDeviceId();
+  return sdk;
+}
+
+export function getSdk() {
   if (typeof window === "undefined") {
-    throw new Error("Circle SDK is browser-only.");
+    return Promise.reject(new Error("Circle SDK is browser-only."));
   }
-  if (sdkPromise) return sdkPromise;
-
-  sdkPromise = (async () => {
-    const { W3SSdk } = await import("@circle-fin/w3s-pw-web-sdk");
-    const sdk = new W3SSdk({ configs: CONFIG() });
-    await sdk.getDeviceId();
-    return sdk;
-  })();
-
+  if (!sdkPromise) {
+    sdkPromise = initSdk().catch((err) => {
+      sdkPromise = null; // let the next attempt retry rather than cache failure
+      throw err;
+    });
+  }
   return sdkPromise;
 }
 
-/// Opens Google's popup and resolves with the tokens plus the provider
-/// identity. socialUserUUID is the stable per-provider subject id.
+/// Opens Google's popup. socialUserUUID is the stable per-provider subject id.
 export async function loginWithGoogle() {
-  const { W3SSdk } = await import("@circle-fin/w3s-pw-web-sdk");
+  const sdk = await getSdk();
   const { SocialLoginProvider } = await import(
     "@circle-fin/w3s-pw-web-sdk/dist/src/types"
   );
 
   return new Promise((resolve, reject) => {
-    const sdk = new W3SSdk({
-      configs: CONFIG(),
-      socialLoginCompleteCallback: (error, result) => {
-        if (error) {
-          reject(new Error(error.message || "Google sign-in failed."));
-          return;
-        }
-        resolve({
-          userToken: result.userToken,
-          encryptionKey: result.encryptionKey,
-          provider: result.oauthInfo?.provider || "google",
-          socialUserUUID: result.oauthInfo?.socialUserUUID || null,
-          email: result.oauthInfo?.socialUserInfo?.email || null,
-          name: result.oauthInfo?.socialUserInfo?.name || null,
-        });
+    // A hung popup must not leave the button spinning forever.
+    const timer = setTimeout(() => {
+      if (pendingLogin) {
+        pendingLogin = null;
+        reject(new Error("Sign-in timed out. Please try again."));
+      }
+    }, 120000);
+
+    pendingLogin = {
+      resolve: (v) => {
+        clearTimeout(timer);
+        resolve(v);
       },
-    });
-    sdk.getDeviceId().then(() => {
+      reject: (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    };
+
+    try {
       sdk.performLogin(SocialLoginProvider.GOOGLE);
-    });
+    } catch (err) {
+      clearTimeout(timer);
+      pendingLogin = null;
+      reject(err);
+    }
   });
 }
 
 /// Runs a challenge — PIN setup, wallet creation, transaction signing.
-/// setAuthentication must precede execute or nothing happens.
 export async function executeChallenge({
   challengeId,
   userToken,
