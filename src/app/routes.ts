@@ -28,8 +28,12 @@ export default [
   route('api/user/preferences', './api/user/preferences/route.js'),
   route('api/reports', './api/reports/route.js'),
   route('api/reputation/export', './api/reputation/export/route.js'),
+  route('api/user/profile', './api/user/profile/route.js'),
   route('api/user/:username', './api/user/[username]/route.js'),
   route('api/wallet/balance', './api/wallet/balance/route.js'),
   route('api/wallet/transactions', './api/wallet/transactions/route.js'),
+  // Must sit last before the catch-all: every fixed route wins over a
+  // username, and reserved_handles blocks anyone claiming one.
+  route(':username', './tip/[username]/page.jsx'),
   route('*', './__create/not-found.tsx'),
 ];

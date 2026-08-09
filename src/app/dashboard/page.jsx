@@ -412,7 +412,7 @@ export default function Dashboard() {
 
   const tipLink =
     (typeof window !== "undefined" ? window.location.origin : "") +
-    "/tip/" +
+    "/" +
     user.username;
 
   const tabs = [

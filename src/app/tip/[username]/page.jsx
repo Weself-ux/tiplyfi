@@ -86,6 +86,9 @@ export default function TipPage({ params }) {
   // Creator's setting decides the default; the fan can always opt to cover it.
   const routerAddress = creator?.tipRouterAddress || "";
   const underReview = creator?.status === "under_review";
+  const accent = creator?.accentColor || "#7c3aed";
+  const socials = creator?.socialLinks || {};
+  const socialEntries = Object.entries(socials).filter(([, v]) => v);
   // The creator's setting is the only input. Fans don't choose who pays.
   const feePaidByFan = creator?.feeMode === "fan_pays";
 
@@ -285,12 +288,38 @@ export default function TipPage({ params }) {
 
       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm max-w-[460px] w-full overflow-hidden">
 
-        <div className="bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] px-8 py-6 text-center">
+        <div
+          className="px-8 py-6 text-center"
+          style={{ background: `linear-gradient(90deg, ${accent}, #3b82f6)` }}
+        >
           <div className="w-16 h-16 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-2xl font-bold text-white mx-auto mb-3 backdrop-blur-sm">
             {initial}
           </div>
-          <h1 className="text-white font-semibold text-xl">@{creator.username}</h1>
-          <p className="text-white/70 text-sm mt-0.5">{creator.displayName}</p>
+          <h1 className="text-white font-semibold text-xl">{creator.displayName}</h1>
+          <p className="text-white/70 text-sm mt-0.5">@{creator.username}</p>
+          {creator.category && (
+            <span className="inline-block mt-2 text-[11px] font-medium text-white/90 bg-white/20 px-2.5 py-1 rounded-full">
+              {creator.category}
+            </span>
+          )}
+          {creator.bio && (
+            <p className="text-white/85 text-sm mt-3 leading-relaxed max-w-[340px] mx-auto">
+              {creator.bio}
+            </p>
+          )}
+          {socialEntries.length > 0 && (
+            <div className="flex items-center justify-center gap-3 mt-3">
+              {socialEntries.map(([key, url]) => (
+                <button
+                  key={key}
+                  onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+                  className="text-[11px] font-medium text-white/80 hover:text-white capitalize transition-colors"
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
          <div className="flex border-b border-[#E5E7EB]">
@@ -662,7 +691,9 @@ export default function TipPage({ params }) {
             <div className="w-16 h-16 rounded-full bg-[#F5F3FF] flex items-center justify-center mx-auto mb-4">
               <Check size={28} className="text-[#7c3aed]" />
             </div>
-            <h2 className="text-xl font-bold text-[#111827] mb-1">Tip Sent! 🎉</h2>
+            <h2 className="text-xl font-bold text-[#111827] mb-1">
+              {creator.thankYouMessage || "Tip Sent! 🎉"}
+            </h2>
             <p className="text-sm text-[#6B7280] mb-6">
               {successMode === "sponsored"
                 ? `$${sentAmount} USDC was sent to @${creator.username} via Circle on Arc Testnet. No wallet needed — it just worked.`
