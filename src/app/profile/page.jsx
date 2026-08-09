@@ -239,7 +239,7 @@ export default function ProfilePage() {
             <div className="mt-3 max-w-[340px] mx-auto text-white/85 text-sm leading-relaxed">
               <Editable
                 value={profile.bio}
-                placeholder="Tell supporters what you make"
+                placeholder="Tell supporters about yourself"
                 onSave={(v) => save({ bio: v })}
                 multiline
                 maxLength={280}
@@ -293,7 +293,7 @@ export default function ProfilePage() {
 
         <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-4">
           <h2 className="text-base font-semibold text-[#111827] mb-1">
-            Thank-you message
+            Custom message
           </h2>
           <p className="text-sm text-[#6B7280] mb-3">
             Shown to a supporter right after they tip you.
