@@ -249,15 +249,6 @@ export default function SettingsPage() {
           <SoonRow label="Delete account" />
         </Section>
 
-        <Section title="Your page">
-          <SoonRow label="Profile photo and bio" />
-          <SoonRow label="Category" />
-          <SoonRow label="Social links" />
-          <SoonRow label="Custom thank-you message" />
-          <SoonRow label="Accent colour and dark mode" />
-          <SoonRow label="Short link (tiplyfi.app/you)" />
-        </Section>
-
         <Section title="Fee">
           <FeeToggle />
           <div className="mt-5 pt-2 border-t border-[#F3F4F6]">

@@ -455,9 +455,12 @@ export default function Dashboard() {
                   onClick={() => setMenuOpen(false)}
                 />
                 <div className="absolute right-0 top-11 z-50 w-44 bg-white border border-[#E5E7EB] rounded-xl shadow-lg py-1">
-                  <span className="block px-4 py-2 text-sm text-[#9CA3AF] cursor-default">
+                  <button
+                    onClick={() => (window.location.href = "/profile")}
+                    className="w-full text-left px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                  >
                     Profile
-                  </span>
+                  </button>
                   <a
                     href="/settings"
                     className="block px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB]"

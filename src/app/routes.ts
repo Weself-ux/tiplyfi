@@ -8,6 +8,7 @@ export default [
   route('forgot-password', './forgot-password/page.jsx'),
   route('howitworks', './howitworks/page.jsx'),
   route('settings', './settings/page.jsx'),
+  route('profile', './profile/page.jsx'),
   route('tip/:username', './tip/[username]/page.jsx'),
   route('api/auth/signup', './api/auth/signup/route.js'),
   route('api/auth/login', './api/auth/login/route.js'),
