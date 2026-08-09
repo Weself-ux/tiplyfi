@@ -27,6 +27,7 @@ export default [
   route('api/user/fee-mode', './api/user/fee-mode/route.js'),
   route('api/user/preferences', './api/user/preferences/route.js'),
   route('api/reports', './api/reports/route.js'),
+  route('api/reputation/export', './api/reputation/export/route.js'),
   route('api/user/:username', './api/user/[username]/route.js'),
   route('api/wallet/balance', './api/wallet/balance/route.js'),
   route('api/wallet/transactions', './api/wallet/transactions/route.js'),

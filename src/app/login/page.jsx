@@ -59,10 +59,10 @@ export default function Login() {
             >
               <img
                 src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-                alt="Tiplyfi Jar"
+                alt="Tiplyfi"
                 className="w-7 h-7 rounded-lg"
               />
-              Tiplyfi Jar
+              Tiplyfi 
             </a>
           </div>
 

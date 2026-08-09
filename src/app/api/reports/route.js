@@ -1,5 +1,9 @@
 import sql from "@/app/api/utils/sql";
 import { rateLimit, getClientIP } from "@/app/api/utils/auth-helpers";
+import {
+  recordReputationEvent,
+  REPUTATION_EVENTS,
+} from "@/app/api/utils/reputation";
 
 const REASONS = ["impersonation", "illegal", "spam", "other"];
 const ESCALATION_THRESHOLD = 3;
@@ -35,11 +39,17 @@ export async function action({ request }) {
       [creator, ip],
     );
     if (dup.length === 0) {
-      await sql(
+      const inserted = await sql(
         `INSERT INTO reports (creator_username, reason, detail, reporter_ip)
-         VALUES ($1, $2, $3, $4)`,
+         VALUES ($1, $2, $3, $4) RETURNING id`,
         [creator, reason, detail ? String(detail).slice(0, 500) : null, ip],
       );
+      await recordReputationEvent({
+        eventType: REPUTATION_EVENTS.REPORT_FILED,
+        subjectType: "username",
+        subjectId: creator,
+        ref: `report:${inserted[0].id}`,
+      });
     }
 
     // Escalation counts distinct reporters, not distinct reports.
@@ -49,10 +59,19 @@ export async function action({ request }) {
       [creator],
     );
     if (Number(distinct[0].n) >= ESCALATION_THRESHOLD) {
-      await sql(
-        "UPDATE users SET status = 'under_review' WHERE username = $1 AND status = 'active'",
+      const changed = await sql(
+        `UPDATE users SET status = 'under_review'
+          WHERE username = $1 AND status = 'active' RETURNING id`,
         [creator],
       );
+      if (changed.length > 0) {
+        await recordReputationEvent({
+          eventType: REPUTATION_EVENTS.PAGE_UNDER_REVIEW,
+          subjectType: "username",
+          subjectId: creator,
+          ref: `review:${changed[0].id}:${Date.now()}`,
+        });
+      }
     }
 
     return Response.json({ success: true });

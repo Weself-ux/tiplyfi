@@ -8,6 +8,10 @@ import {
   isValidUsername,
   validatePassword,
 } from "@/app/api/utils/auth-helpers";
+import {
+  recordReputationEvent,
+  REPUTATION_EVENTS,
+} from "@/app/api/utils/reputation";
 
 export async function action({ request }) {
   try {
@@ -169,6 +173,12 @@ export async function action({ request }) {
     });
   } catch (err) {
     console.error("Signup error:", err);
+    await recordReputationEvent({
+      eventType: REPUTATION_EVENTS.ACCOUNT_CREATED,
+      subjectType: "username",
+      subjectId: user.username,
+      ref: `user:${user.id}`,
+    });
     return Response.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 },

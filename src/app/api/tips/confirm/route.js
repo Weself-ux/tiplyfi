@@ -1,6 +1,7 @@
 import sql from "@/app/api/utils/sql";
 import { rateLimit, getClientIP } from "@/app/api/utils/auth-helpers";
 import { verifyArcTransaction } from "@/app/api/utils/arc";
+import { recordTipEvents } from "@/app/api/utils/reputation";
 
 export async function action({ request }) {
   try {
@@ -24,7 +25,7 @@ export async function action({ request }) {
     }
 
     const cols =
-      "id, creator_address, amount, amount_usdc, gross_usdc, status, tx_hash";
+      "id, creator_username, creator_address, amount, amount_usdc, gross_usdc, status, tx_hash";
     const rows = tipId
       ? await sql(`SELECT ${cols} FROM tips WHERE id = $1`, [tipId])
       : await sql(`SELECT ${cols} FROM tips WHERE client_ref = $1`, [clientRef]);
@@ -71,6 +72,14 @@ export async function action({ request }) {
        WHERE id = $3`,
       [txHash, verification.from || null, tip.id],
     );
+
+    await recordTipEvents({
+      creatorUsername: tip.creator_username,
+      tipperAddress: verification.from,
+      netUsdc: verification.amountUsdc,
+      platformTipUsdc: 0,
+      txHash,
+    });
 
     return Response.json({ success: true, tipId: tip.id });
   } catch (err) {

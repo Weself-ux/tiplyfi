@@ -1,5 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import { ARC_CONFIG } from "@/app/api/utils/arc";
+import { recordTipEvents } from "@/app/api/utils/reputation";
 
 const TOPIC_TIPPED =
   "0xf0df44e4f3382f18e57bc7670c88542c838c23d709cadf43a2d64665f647a79f";
@@ -137,10 +138,24 @@ export async function loader({ request }) {
                 );
               }
             }
-            processed++;
+            
+            const owner = await sql(
+            "SELECT username FROM users WHERE lower(wallet_address) = $1",
+            [creator],
+          );
+          if (owner.length > 0) {
+            await recordTipEvents({
+              creatorUsername: owner[0].username,
+              tipperAddress: tipper,
+              netUsdc: net,
+              platformTipUsdc: 0,
+              txHash: log.transactionHash,
+            });
           }
+          processed++;
+        }
 
-          if (topic === TOPIC_ESCROWED) {
+        if (topic === TOPIC_ESCROWED) {
             await sql(
               "UPDATE tips SET payout_status = 'escrowed' WHERE tx_hash = $1",
               [log.transactionHash],
