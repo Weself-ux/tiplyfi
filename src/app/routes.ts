@@ -16,6 +16,7 @@ export default [
   route('api/auth/reset-password', './api/auth/reset-password/route.js'),
   route('api/auth/request-password-reset', './api/auth/request-password-reset/route.js'),
   route('api/auth/verify-password', './api/auth/verify-password/route.js'),
+  route('api/auth/circle/device', './api/auth/circle/device/route.js'),
   route('api/auth/circle/login', './api/auth/circle/login/route.js'),
   route('api/auth/circle/register', './api/auth/circle/register/route.js'),
   route('api/auth/circle/complete', './api/auth/circle/complete/route.js'),

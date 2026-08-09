@@ -29,6 +29,19 @@ async function circleFetch(path, { method = "GET", userToken, body } = {}) {
   return data;
 }
 
+/// Exchanges the SDK's deviceId for a device-bound session. Required before
+/// performLogin — without it Circle's auth page has nothing to authenticate.
+export async function createSocialDeviceToken(deviceId) {
+  const data = await circleFetch("/users/social/token", {
+    method: "POST",
+    body: { idempotencyKey: crypto.randomUUID(), deviceId },
+  });
+  return {
+    deviceToken: data?.data?.deviceToken,
+    deviceEncryptionKey: data?.data?.deviceEncryptionKey,
+  };
+}
+
 /// Creates the PIN-setup + wallet-creation challenge. The wallet does not
 /// exist until the user completes this challenge in the browser SDK.
 /// Code 155106 means the user is already initialised — fetch wallets instead.
