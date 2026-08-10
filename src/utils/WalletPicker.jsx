@@ -23,7 +23,7 @@ const INSTALL_URLS = {
  * Installed wallets sort to the top so the working options come first.
  *
  * Props:
- *   accent      — the creator's colour, so the modal matches their page
+ *   accent      the creator's colour, so the modal matches their page
  *   onConnect({ address, provider, walletId })
  *   onClose()
  */
@@ -85,7 +85,6 @@ export default function WalletPicker({ accent = "#7c3aed", onConnect, onClose })
         )}
 
         <div className="grid sm:grid-cols-[1fr_190px]">
-          {/* Wallets — installed first */}
           <div className="p-3 max-h-[336px] overflow-y-auto">
             {wallets.map((w) => {
               const installed = w.detect();
@@ -125,7 +124,6 @@ export default function WalletPicker({ accent = "#7c3aed", onConnect, onClose })
             })}
           </div>
 
-          {/* QR pairing — placeholder until WalletConnect lands */}
           <div className="border-t sm:border-t-0 sm:border-l border-[var(--line)] p-5 flex flex-col items-center justify-center text-center">
             <div
               className="relative w-[124px] h-[124px] rounded-2xl flex items-center justify-center mb-4"
@@ -141,4 +139,23 @@ export default function WalletPicker({ accent = "#7c3aed", onConnect, onClose })
                   background: `radial-gradient(circle at 50% 50%, ${accent}1F 0%, transparent 70%)`,
                 }}
               />
-              
+            </div>
+            <p className="text-xs font-medium text-white mb-1">Scan to connect</p>
+            <p className="text-[11px] text-[var(--muted)] leading-snug">
+              Pair a phone wallet by scanning.
+            </p>
+            <span className="mt-3 text-[10px] font-semibold text-[var(--muted)] bg-white/[0.06] px-2 py-1 rounded uppercase tracking-wider">
+              Soon
+            </span>
+          </div>
+        </div>
+
+        <div className="px-6 py-3.5 border-t border-[var(--line)]">
+          <p className="text-[11px] text-[rgba(139,138,165,0.7)] text-center">
+            By connecting you agree to Tiplyfi's Terms of Service.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
