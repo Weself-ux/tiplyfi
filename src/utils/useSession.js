@@ -10,8 +10,10 @@ const USER_KEY = "tiplyfi_user";
   if (typeof window === "undefined") return;
   try {
     for (const [legacy, current] of [
-      ["tiplyfi_token", TOKEN_KEY],
-      ["tiplyfi_user", USER_KEY],
+      // Deliberately the OLD keys. These must never be renamed — they are
+      // what the migration reads FROM.
+      ["tipjar_token", TOKEN_KEY],
+      ["tipjar_user", USER_KEY],
     ]) {
       const value = localStorage.getItem(legacy);
       if (!value) continue;
