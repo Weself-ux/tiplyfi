@@ -27,7 +27,10 @@ export default defineConfig({
       // Circle's Web SDK needs Node built-ins that browsers lack.
       // Scoped deliberately: a blanket polyfill reshapes the module graph,
       include: ['buffer', 'crypto', 'stream', 'util'],
-      globals: { Buffer: true, global: true, process: true },
+      // process is deliberately NOT polyfilled: the shim replaces Node's real
+      // process in the SSR bundle too, which empties process.env and breaks
+      // every server route.
+      globals: { Buffer: true, global: true, process: false },
     }),
     nextPublicProcessEnv(),
     restartEnvFileChange(),
