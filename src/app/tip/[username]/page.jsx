@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { track } from "../../../utils/track";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ExternalLink, Loader2, Wallet, X, Zap } from "lucide-react";
 import {
@@ -91,7 +92,8 @@ export default function TipPage({ params }) {
 
   useEffect(() => {
     flushTipQueue();
-  }, []);
+    track("tip_page_view", {}, username);
+  }, [username]);
 
   const {
     data: creator,
@@ -193,6 +195,7 @@ export default function TipPage({ params }) {
       }
 
       setStatus("Confirm in your wallet...");
+      track("tip_started", { amount: Number(netUsdc) }, username);
       const hash = routed
         ? await tipViaRouter({
             creatorAddress: creator.walletAddress,
@@ -208,6 +211,11 @@ export default function TipPage({ params }) {
 
       await confirmTip({ tipId, clientRef, txHash: hash });
 
+      track(
+        "tip_completed",
+        { amount: Number(netUsdc), supportedPlatform: supportTiplyfi },
+        username,
+      );
       setShowSuccess(true);
       setSentAmount(netUsdc);
       setAmount("5");

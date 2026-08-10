@@ -111,7 +111,7 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("tipjar_token");
+    const token = localStorage.getItem("tiplyfi_token");
     if (!token) return;
     fetch("/api/user/profile", {
       headers: { Authorization: `Bearer ${token}` },
@@ -128,7 +128,7 @@ export default function ProfilePage() {
   async function save(patch) {
     setProfile((p) => ({ ...p, ...patch }));
     try {
-      const token = localStorage.getItem("tipjar_token");
+      const token = localStorage.getItem("tiplyfi_token");
       const res = await fetch("/api/user/profile", {
         method: "POST",
         headers: {

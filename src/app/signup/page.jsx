@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Atmosphere from "../../utils/Atmosphere";
 import Logo from "../../utils/Logo";
+import { track } from "../../utils/track";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import {
   initSdk,
@@ -86,7 +87,7 @@ export default function SignupPage() {
 
 
         if (data.registered) {
-          localStorage.setItem("tipjar_token", data.token);
+          localStorage.setItem("tiplyfi_token", data.token);
           window.location.href = "/dashboard";
           return;
         }
@@ -136,6 +137,7 @@ export default function SignupPage() {
   }, []);
 
   async function handleGoogle() {
+    track("signup_started");
     setError("");
     setBusy(true);
     try {
@@ -177,7 +179,8 @@ export default function SignupPage() {
         throw new Error(data.detail || data.error || "Could not create account.");
       }
 
-      localStorage.setItem("tipjar_token", data.token);
+      localStorage.setItem("tiplyfi_token", data.token);
+      track("signup_username_set", {}, clean);
       setStep("securing");
 
       // Circle's hosted screens collect the PIN and security questions.
@@ -207,6 +210,7 @@ export default function SignupPage() {
         throw new Error(d.error || "Wallet setup did not finish.");
       }
 
+      track("signup_completed", {}, clean);
       clearDeviceSession();
       // Small settle before a full page navigation, so the session write is
       // visible to the dashboard's first render.

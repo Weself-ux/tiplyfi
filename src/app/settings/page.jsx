@@ -65,7 +65,7 @@ function FeeToggle() {
   const { data } = useQuery({
     queryKey: ["feeMode"],
     queryFn: async () => {
-      const token = localStorage.getItem("tipjar_token");
+      const token = localStorage.getItem("tiplyfi_token");
       if (!token) return null;
       const res = await fetch("/api/user/fee-mode", {
         headers: { Authorization: `Bearer ${token}` },
@@ -81,7 +81,7 @@ function FeeToggle() {
     if (saving) return;
     setSaving(true);
     try {
-      const token = localStorage.getItem("tipjar_token");
+      const token = localStorage.getItem("tiplyfi_token");
       const res = await fetch("/api/user/fee-mode", {
         method: "POST",
         headers: {
@@ -164,7 +164,7 @@ export default function SettingsPage() {
   const { data: prefs } = useQuery({
     queryKey: ["preferences"],
     queryFn: async () => {
-      const token = localStorage.getItem("tipjar_token");
+      const token = localStorage.getItem("tiplyfi_token");
       if (!token) return null;
       const res = await fetch("/api/user/preferences", {
         headers: { Authorization: `Bearer ${token}` },
@@ -178,7 +178,7 @@ export default function SettingsPage() {
     setSaving(true);
     setSaved(false);
     try {
-      const token = localStorage.getItem("tipjar_token");
+      const token = localStorage.getItem("tiplyfi_token");
       const res = await fetch("/api/user/preferences", {
         method: "POST",
         headers: {

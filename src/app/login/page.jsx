@@ -47,7 +47,7 @@ export default function LoginPage() {
               window.location.href = "/signup";
               return;
             }
-            localStorage.setItem("tipjar_token", data.token);
+            localStorage.setItem("tiplyfi_token", data.token);
             window.location.replace("/dashboard");
           } catch (e) {
             setError(e.message);

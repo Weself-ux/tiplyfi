@@ -1,7 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
 
-const TOKEN_KEY = "tipjar_token";
-const USER_KEY = "tipjar_user";
+const TOKEN_KEY = "tiplyfi_token";
+const USER_KEY = "tiplyfi_user";
+
+// Legacy keys from before the Tip Jar rename. Migrated once at module load,
+// which runs during import and therefore before any component reads them.
+// Renaming without this would silently sign every existing creator out.
+(function migrateLegacyKeys() {
+  if (typeof window === "undefined") return;
+  try {
+    for (const [legacy, current] of [
+      ["tiplyfi_token", TOKEN_KEY],
+      ["tiplyfi_user", USER_KEY],
+    ]) {
+      const value = localStorage.getItem(legacy);
+      if (!value) continue;
+      if (!localStorage.getItem(current)) localStorage.setItem(current, value);
+      localStorage.removeItem(legacy);
+    }
+  } catch {}
+})();
 
 export default function useSession() {
   const [user, setUser] = useState(null);

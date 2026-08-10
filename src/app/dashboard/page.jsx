@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import useSession from "../../utils/useSession";
 import Logo from "../../utils/Logo";
+import { track } from "../../utils/track";
 import {
   formatAddress,
   ARC_EXPLORER,
@@ -47,8 +48,9 @@ function SendUSDCForm({ walletAddress, username }) {
     }
 
     setSending(true);
+    track("withdraw_started", { amount: Number(sendAmount) });
     try {
-      const token = localStorage.getItem("tipjar_token");
+      const token = localStorage.getItem("tiplyfi_token");
       setSendStatus("Preparing...");
 
       const res = await fetch("/api/wallet/withdraw", {
@@ -102,6 +104,7 @@ function SendUSDCForm({ walletAddress, username }) {
         }),
       }).catch(() => {});
 
+      track("withdraw_completed", { amount: Number(sendAmount) });
       setSendStatus("Sent. Your balance will update shortly.");
       setToAddress("");
       setSendAmount("");
@@ -201,6 +204,15 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Link-in-bio rate is the metric that matters, so the prompt stays until
+  // the creator has actually shared once.
+  const [hasShared, setHasShared] = useState(true);
+
+  useEffect(() => {
+    try {
+      setHasShared(localStorage.getItem("tiplyfi_link_shared") === "1");
+    } catch {}
+  }, []);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -259,7 +271,7 @@ export default function Dashboard() {
   const { data: escrowData } = useQuery({
     queryKey: ["escrow", user?.username],
     queryFn: async () => {
-      const token = localStorage.getItem("tipjar_token");
+      const token = localStorage.getItem("tiplyfi_token");
       if (!token) return null;
       const res = await fetch("/api/tips/escrow", {
         headers: { Authorization: `Bearer ${token}` },
@@ -284,9 +296,33 @@ export default function Dashboard() {
     refetchInterval: 30000,
   });
 
+  function markShared() {
+    try {
+      localStorage.setItem("tiplyfi_link_shared", "1");
+    } catch {}
+    setHasShared(true);
+  }
+
+  function shareTo(platform) {
+    const text = encodeURIComponent(
+      `You can support me directly here — it takes seconds and I keep 94% of it.`,
+    );
+    const url = encodeURIComponent(tipLink);
+    const targets = {
+      x: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+      whatsapp: `https://wa.me/?text=${text}%20${url}`,
+      telegram: `https://t.me/share/url?url=${url}&text=${text}`,
+    };
+    track("link_shared", { platform }, user.username);
+    markShared();
+    window.open(targets[platform], "_blank", "noopener,noreferrer");
+  }
+
   function copyLink() {
     const link = window.location.origin + "/" + user.username;
     navigator.clipboard.writeText(link);
+    track("link_copied", {}, user.username);
+    markShared();
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -513,6 +549,67 @@ export default function Dashboard() {
         )}
 
         {/* Stats */}
+        {!hasShared && (
+          <div
+            className="card p-6 mb-6 rise"
+            style={{
+              "--d": "0.02s",
+              background:
+                "linear-gradient(120deg, rgba(124,58,237,0.10), rgba(59,130,246,0.08))",
+              borderColor: "rgba(124,58,237,0.22)",
+            }}
+          >
+            <h3 className="display-md text-[#111827] text-[17px] mb-1">
+              Your link is live. Now put it somewhere.
+            </h3>
+            <p className="text-sm text-[#6B7280] mb-4 max-w-[520px]">
+              Nobody can tip you until they can find you. Creators who add
+              their link to a bio on day one get their first tip far sooner.
+            </p>
+
+            <div className="flex items-center gap-2 mb-4">
+              <code className="flex-1 font-mono-t text-[13px] text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-xl px-3 py-2.5 truncate">
+                {tipLink}
+              </code>
+              <button
+                onClick={copyLink}
+                className="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex-shrink-0"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-[#9CA3AF] mr-1">Post to</span>
+              {[
+                ["x", "X"],
+                ["whatsapp", "WhatsApp"],
+                ["telegram", "Telegram"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => shareTo(id)}
+                  className="px-3 py-1.5 text-xs font-medium text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-lg hover:border-[#C4B5FD] hover:text-[#111827] transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
+              <button
+                onClick={markShared}
+                className="ml-auto text-xs text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+              >
+                Already done
+              </button>
+            </div>
+            <p className="text-xs text-[#9CA3AF] mt-3">
+              For Instagram, TikTok and other social medias copy the link and paste it into your
+              bio — that's where it keeps working long after a post scrolls by.
+            </p>
+            <div className="hidden">
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
           <div className="stat rise" style={{ "--d": "0.05s" }}>
             <p className="label-xs text-[#9CA3AF] mb-3">Wallet balance</p>

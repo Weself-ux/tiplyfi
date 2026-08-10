@@ -196,7 +196,7 @@ export function isOauthReturn() {
 /// 14-day window is nearly up. Tokens live in httpOnly cookies, so the
 /// browser never holds them directly.
 export async function getCircleSession() {
-  const token = localStorage.getItem("tipjar_token");
+  const token = localStorage.getItem("tiplyfi_token");
   const res = await fetch("/api/auth/circle/session", {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -213,9 +213,24 @@ export async function getCircleSession() {
 export function executeChallenge(sdk, { challengeId, userToken, encryptionKey }) {
   sdk.setAuthentication({ userToken, encryptionKey });
   return new Promise((resolve, reject) => {
+   let settled = false;
     sdk.execute(challengeId, (error, result) => {
-      if (error) reject(new Error(error.message || "Challenge failed."));
-      else resolve(result);
+      if (settled) return;
+
+      // 155706 is Circle's 10-second iframe timeout. Its hosted UI is often
+      // slower than that on a cold load and then renders fine, so treating
+      // it as fatal shows an error over a working approval screen.
+      if (error?.code === 155706) {
+        console.warn("[tiplyfi] circle iframe slow to load, waiting");
+        return;
+      }
+      settled = true;
+
+      if (error) {
+        reject(new Error(error.message || "Challenge failed."));
+        return;
+      }
+      resolve(result);
     });
   });
 }

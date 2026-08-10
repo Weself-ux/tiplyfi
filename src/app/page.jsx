@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
 import Logo from "../utils/Logo";
 import Atmosphere from "../utils/Atmosphere";
+import { track } from "../utils/track";
 
 /// Pulls the button a few pixels toward the cursor. CSS does the movement;
 /// this only writes the offset.
@@ -69,10 +70,15 @@ export default function LandingPage() {
   const [handle, setHandle] = useState("");
   const magnetRef = useMagnet();
 
+  useEffect(() => {
+    track("landing_view");
+  }, []);
+
   const shown = handle || "yourname";
 
   function claim() {
     const clean = handle.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    track("claim_submitted", { hasHandle: Boolean(clean) });
     window.location.href = clean ? `/signup?u=${clean}` : "/signup";
   }
 
@@ -160,6 +166,7 @@ export default function LandingPage() {
               </span>
               <input
                 value={handle}
+                onFocus={() => track("claim_started")}
                 onChange={(e) =>
                   setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))
                 }
