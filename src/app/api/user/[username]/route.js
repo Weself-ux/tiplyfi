@@ -13,13 +13,13 @@ export async function loader({ request, params }) {
       // with the creator rather than in a second request.
       `SELECT u.username, u.wallet_address, u.full_name, u.created_at,
               u.fee_mode, u.status, u.bio, u.category, u.accent_color,
-              u.thank_you_message, u.social_links,
+              u.thank_you_message, u.social_links, u.full_name AS display_name,
               (SELECT count(*) FROM tips t
                 WHERE t.creator_username = u.username AND t.status = 'confirmed')
                 AS tip_count,
-              (SELECT count(DISTINCT t.tipper_address) FROM tips t
+              (SELECT count(DISTINCT t.supporter_ref) FROM tips t
                 WHERE t.creator_username = u.username AND t.status = 'confirmed'
-                  AND t.tipper_address IS NOT NULL)
+                  AND t.supporter_ref IS NOT NULL)
                 AS supporter_count
          FROM users u WHERE u.username = $1`,
       [username.toLowerCase()],

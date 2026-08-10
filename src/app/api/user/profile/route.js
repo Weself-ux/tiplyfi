@@ -32,12 +32,13 @@ export async function loader({ request }) {
       return Response.json({ error: "Not authenticated." }, { status: 401 });
     }
     const rows = await sql(
-      `SELECT bio, category, accent_color, thank_you_message, social_links
+      `SELECT full_name, bio, category, accent_color, thank_you_message, social_links
          FROM users WHERE id = $1`,
       [user.id],
     );
     const r = rows[0] || {};
     return Response.json({
+      displayName: r.full_name || "",
       bio: r.bio || "",
       category: r.category || "",
       accentColor: r.accent_color || "#7c3aed",
@@ -74,9 +75,20 @@ export async function action({ request }) {
       }
     }
 
+    if (body.displayName !== undefined) {
+      const name = String(body.displayName).trim();
+      if (name.length < 1 || name.length > 50) {
+        return Response.json(
+          { error: "Display name must be 1 to 50 characters." },
+          { status: 400 },
+        );
+      }
+    }
+
     await sql(
       `UPDATE users
-          SET bio               = COALESCE($1, bio),
+          SET full_name         = COALESCE($7, full_name),
+              bio               = COALESCE($1, bio),
               category          = COALESCE($2, category),
               accent_color      = COALESCE($3, accent_color),
               thank_you_message = COALESCE($4, thank_you_message),
@@ -91,6 +103,9 @@ export async function action({ request }) {
           : null,
         JSON.stringify(socials),
         user.id,
+        body.displayName !== undefined
+          ? String(body.displayName).trim().slice(0, 50)
+          : null,
       ],
     );
 

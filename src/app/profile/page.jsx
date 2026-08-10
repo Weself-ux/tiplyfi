@@ -212,9 +212,15 @@ export default function ProfilePage() {
               {initial}
             </button>
 
-            <h1 className="text-white font-semibold text-xl">
-              {user.fullName || user.username}
-            </h1>
+            <div className="display-md text-white text-xl">
+              <Editable
+                value={profile.displayName || user.fullName || ""}
+                placeholder="Your name"
+                onSave={(v) => save({ displayName: v })}
+                maxLength={50}
+                className="justify-center"
+              />
+            </div>
             <p className="text-white/70 text-sm mt-0.5">@{user.username}</p>
 
             <div className="mt-2">

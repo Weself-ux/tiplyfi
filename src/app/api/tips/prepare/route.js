@@ -1,5 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import { rateLimit, getClientIP } from "@/app/api/utils/auth-helpers";
+import { supporterRef } from "@/app/api/utils/supporter";
 
 export async function action({ request }) {
   try {
@@ -44,8 +45,8 @@ export async function action({ request }) {
     // Written BEFORE the transaction is sent, so the message survives
     // any failure between here and confirmation.
     const result = await sql(
-      `INSERT INTO tips (creator_username, creator_address, tipper_address, amount, amount_usdc, gross_usdc, fee_usdc, platform_tip_usdc, message, client_ref, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
+      `INSERT INTO tips (creator_username, creator_address, tipper_address, amount, amount_usdc, gross_usdc, fee_usdc, platform_tip_usdc, message, client_ref, supporter_ref, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
        ON CONFLICT (client_ref) DO UPDATE SET client_ref = EXCLUDED.client_ref
        RETURNING id`,
       [
@@ -59,6 +60,7 @@ export async function action({ request }) {
         Number(platformTipUsdc ?? 0),
         message ? String(message).slice(0, 200) : null,
         clientRef,
+        supporterRef({ walletAddress: tipperAddress, email: body.tipperEmail }),
       ],
     );
 

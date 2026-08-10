@@ -77,12 +77,10 @@ export default function TipPage({ params }) {
   const [amount, setAmount] = useState("5");
   const [customAmount, setCustomAmount] = useState("");
   const [message, setMessage] = useState("");
-  const [tipperEmail, setTipperEmail] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [txHash, setTxHash] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMode, setSuccessMode] = useState("");
   const [sentAmount, setSentAmount] = useState("");
   const [supportTiplyfi, setSupportTiplyfi] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -210,7 +208,6 @@ export default function TipPage({ params }) {
 
       await confirmTip({ tipId, clientRef, txHash: hash });
 
-      setSuccessMode("wallet");
       setShowSuccess(true);
       setSentAmount(netUsdc);
       setAmount("5");
@@ -224,48 +221,6 @@ export default function TipPage({ params }) {
       setLoading(false);
     }
   }
-
-  async function handleSponsoredTip() {
-    if (!validAmount) {
-      setStatus("Enter a valid amount.");
-      return;
-    }
-    if (Number(finalAmount) > 100) {
-      setStatus("Sponsored tips are limited to 100 USDC.");
-      return;
-    }
-    try {
-      setLoading(true);
-      setStatus("Processing your tip on Arc...");
-      const res = await fetch("/api/tips/sponsored", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          creatorUsername: username,
-          amountUsdc: parseFloat(finalAmount),
-          message: message || null,
-          tipperEmail: tipperEmail || null,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Tip failed.");
-      setTxHash(data.txId || "");
-      setSuccessMode("sponsored");
-      setShowSuccess(true);
-      setSentAmount(finalAmount);
-      setAmount("5");
-      setCustomAmount("");
-      setMessage("");
-      setTipperEmail("");
-      setStatus("");
-    } catch (err) {
-      setStatus("Error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-
 
   if (creatorError?.message === "not_found") {
     return (
@@ -489,13 +444,37 @@ export default function TipPage({ params }) {
           </div>
 
           <div className="p-5 flex-1 flex flex-col">
-            {underReview && (
+            {mode === "sponsored" && (
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ background: `${accent}22`, border: `1px solid ${accent}44` }}
+                >
+                  <Zap size={22} style={{ color: accent }} />
+                </div>
+                <h3 className="display-md text-white text-lg mb-2">
+                  Card and bank, coming soon
+                </h3>
+                <p className="text-sm text-[var(--muted)] leading-relaxed max-w-[260px]">
+                  Supporters will be able to tip with a card or bank transfer —
+                  no wallet, no crypto. It still lands in @{creator.username}'s
+                  wallet as USDC.
+                </p>
+                <span className="mt-5 text-[10px] font-semibold text-[var(--muted)] bg-white/[0.06] px-2.5 py-1 rounded uppercase tracking-wider">
+                  In development
+                </span>
+              </div>
+            )}
+
+            {mode === "wallet" && underReview && (
               <div className="mb-4 px-3 py-2.5 text-[13px] text-amber-200/90 bg-amber-500/10 border border-amber-500/25 rounded-lg">
                 This page is being reviewed. Tipping is paused.
               </div>
             )}
 
-            {mode === "wallet" && !wallet && (
+            {mode === "wallet" && (
+              <>
+            {!wallet && (
               <div className="mb-4">
                 <p className="eyebrow text-[var(--muted)] mb-2">Network</p>
                 <div className="flex flex-wrap gap-1.5 mb-3">
@@ -545,24 +524,6 @@ export default function TipPage({ params }) {
                 >
                   Disconnect
                 </button>
-              </div>
-            )}
-
-            {mode === "sponsored" && (
-              <div className="mb-4">
-                <p className="eyebrow text-[var(--muted)] mb-1.5">
-                  Email for a receipt
-                </p>
-                <input
-                  type="email"
-                  value={tipperEmail}
-                  onChange={(e) => {
-                    setTipperEmail(e.target.value);
-                    setStatus("");
-                  }}
-                  placeholder="you@example.com"
-                  className="w-full px-3 py-2.5 text-sm text-white bg-white/[0.04] border border-[var(--line)] rounded-lg placeholder:text-[rgba(139,138,165,0.5)] focus:border-[rgba(255,255,255,0.2)] transition-colors"
-                />
               </div>
             )}
 
@@ -675,8 +636,13 @@ export default function TipPage({ params }) {
             )}
 
             <button
-              onClick={mode === "wallet" ? handleWalletTip : handleSponsoredTip}
-              disabled={loading || underReview || (mode === "wallet" && !wallet)}
+              onClick={handleWalletTip}
+              disabled={
+                loading ||
+                underReview ||
+                mode === "sponsored" ||
+                !wallet
+              }
               className="btn-primary w-full py-3 rounded-lg text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed mt-auto"
             >
               {loading ? (
@@ -688,6 +654,8 @@ export default function TipPage({ params }) {
                 `Send ${validAmount ? `$${finalAmount}` : ""} USDC`
               )}
             </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -821,7 +789,7 @@ export default function TipPage({ params }) {
               is in @{creator.username}'s wallet.
             </p>
 
-            {txHash && successMode === "wallet" && (
+            {txHash && (
               <button
                 onClick={() =>
                   window.open(
