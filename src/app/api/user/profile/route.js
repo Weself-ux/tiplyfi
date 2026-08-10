@@ -92,7 +92,7 @@ export async function action({ request }) {
               category          = COALESCE($2, category),
               accent_color      = COALESCE($3, accent_color),
               thank_you_message = COALESCE($4, thank_you_message),
-              social_links      = $5
+              social_links      = COALESCE($5::jsonb, social_links),
         WHERE id = $6`,
       [
         body.bio !== undefined ? String(body.bio).slice(0, 280) : null,
@@ -101,7 +101,9 @@ export async function action({ request }) {
         body.thankYouMessage !== undefined
           ? String(body.thankYouMessage).slice(0, 200)
           : null,
-        JSON.stringify(socials),
+        // Null means "not in this patch" — without it, saving a colour wipes
+        // every link the creator has set.
+        body.socialLinks === undefined ? null : JSON.stringify(socials),
         user.id,
         body.displayName !== undefined
           ? String(body.displayName).trim().slice(0, 50)

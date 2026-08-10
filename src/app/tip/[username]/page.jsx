@@ -14,41 +14,31 @@ import WalletPicker from "../../../utils/WalletPicker";
 import { confirmTip, flushTipQueue } from "../../../utils/tipQueue";
 import Logo from "../../../utils/Logo";
 
-/// Runs on the server, so title and Open Graph tags land in the initial HTML.
-/// Unfurlers on X, WhatsApp and Discord never execute JavaScript, so without
-/// this a shared creator link previews as a blank card.
-export async function loader({ params, request }) {
-  try {
-    const origin = new URL(request.url).origin;
-    const res = await fetch(`${origin}/api/user/${params.username}`);
-    if (!res.ok) return { creator: null, username: params.username };
-    return { creator: await res.json(), username: params.username };
-  } catch {
-    return { creator: null, username: params.username };
-  }
+import { getCreatorMeta } from "@/app/api/utils/creator-meta.server";
+
+/// Server-only: the query lives in a .server module so the database client
+/// can never reach the browser bundle.
+export async function loader({ params }) {
+  const username = String(params.username || "").toLowerCase();
+  return { creator: await getCreatorMeta(username), username };
 }
 
 export function meta({ data }) {
   const c = data?.creator;
   const handle = data?.username || "";
-
-  if (!c) {
-    return [
-      { title: "Tiplyfi" },
-      { name: "robots", content: "noindex" },
-    ];
-  }
-
-  const name = c.displayName || c.username;
-  const title = `Support ${name} on Tiplyfi`;
-  const description =
-    c.bio?.trim() ||
-    `Send ${name} a tip in USDC. It arrives in under a second, straight to their wallet.`;
   const url = `https://tiplyfi.vercel.app/${handle}`;
 
-  // A page with no bio and no tips is thin content. Indexing it earns nothing
-  // and dilutes the pages that do have something to say.
-  const thin = !c.bio?.trim() && !c.category && (c.tipCount || 0) === 0;
+  const name = c?.full_name || c?.username || handle;
+  const title = c ? `Support ${name} on Tiplyfi` : "Tiplyfi";
+  const description = c
+    ? c.bio?.trim() ||
+      `Send ${name} a tip in USDC. It arrives in under a second, straight to their wallet.`
+    : "Get paid in USDC, in under a second. One link, 6% flat, no card processor.";
+
+  // Thin pages earn nothing from indexing, but they must still produce a
+  // valid preview card — that's the shared-link path, not the search path.
+  const thin =
+    !c || (!c.bio?.trim() && !c.category && Number(c.tip_count || 0) === 0);
 
   return [
     { title },
@@ -60,7 +50,9 @@ export function meta({ data }) {
     { property: "og:description", content: description },
     { property: "og:url", content: url },
     { property: "og:site_name", content: "Tiplyfi" },
-    { name: "twitter:card", content: "summary_large_image" },
+    // summary, not summary_large_image: the large variant requires an image
+    // and is rejected without one, which is why the validator found no card.
+    { name: "twitter:card", content: "summary" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
   ];
