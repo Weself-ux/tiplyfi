@@ -27,9 +27,14 @@ export async function action({ request }) {
       );
     }
 
+    // userId comes back on the wallet record, so no extra call is needed.
     await sql(
-      `UPDATE users SET wallet_address = $1, circle_wallet_id = $2 WHERE id = $3`,
-      [arc.address, arc.id, user.id],
+      `UPDATE users
+          SET wallet_address = $1,
+              circle_wallet_id = $2,
+              circle_user_id = COALESCE(circle_user_id, $3)
+        WHERE id = $4`,
+      [arc.address, arc.id, arc.userId || null, user.id],
     );
 
     await recordReputationEvent({

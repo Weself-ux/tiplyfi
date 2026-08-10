@@ -82,7 +82,26 @@ function SendUSDCForm({ walletAddress, username }) {
         encryptionKey: session.encryptionKey,
       });
 
-      setTxHash(result?.data?.txHash || "");
+      const hash = result?.data?.txHash || "";
+      setTxHash(hash);
+
+      // SCA transfers go through the EntryPoint, so the explorer can't
+      // attribute them to this wallet. Keep our own record.
+      fetch("/api/wallet/withdrawals", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          toAddress: toAddress.trim(),
+          amount: sendAmount,
+          txHash: hash,
+          challengeId: data.challengeId,
+          status: hash ? "confirmed" : "pending",
+        }),
+      }).catch(() => {});
+
       setSendStatus("Sent. Your balance will update shortly.");
       setToAddress("");
       setSendAmount("");
