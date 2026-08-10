@@ -136,6 +136,23 @@ export function layoutWrapperPlugin(userOpts: HierarchicalLayoutOptions = {}): P
     // import the actual page with a flag to skip re-wrapping
     imports.push(`import Page from ${JSON.stringify(pagePath + NO_LAYOUT_QUERY)};`);
 
+    // Forward route-module exports the page declares. Without this the
+    // wrapper swallows them and React Router never sees a page's meta,
+    // so link previews and canonical tags silently never render.
+    const pageSource = fs.readFileSync(pagePath, 'utf-8');
+    const forwarded = ['meta', 'links', 'handle'].filter((name) =>
+      new RegExp(`export\\s+(async\\s+)?(function|const)\\s+${name}\\b`).test(
+        pageSource
+      )
+    );
+    if (forwarded.length > 0) {
+      imports.push(
+        `export { ${forwarded.join(', ')} } from ${JSON.stringify(
+          pagePath + NO_LAYOUT_QUERY
+        )};`
+      );
+    }
+
     if (routeParams.length > 0) {
       imports.push(
         `import { useParams${hasSpreadParams ? ', useLocation' : ''} } from 'react-router-dom';`

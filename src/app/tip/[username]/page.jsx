@@ -14,44 +14,27 @@ import WalletPicker from "../../../utils/WalletPicker";
 import { confirmTip, flushTipQueue } from "../../../utils/tipQueue";
 import Logo from "../../../utils/Logo";
 
-import { getCreatorMeta } from "@/app/api/utils/creator-meta.server";
-
-/// Server-only: the query lives in a .server module so the database client
-/// can never reach the browser bundle.
-export async function loader({ params }) {
-  const username = String(params.username || "").toLowerCase();
-  return { creator: await getCreatorMeta(username), username };
-}
-
-export function meta({ data }) {
-  const c = data?.creator;
-  const handle = data?.username || "";
+/// No loader: this codebase's layout plugin can't forward server-only route
+/// exports without pulling them into the client graph. meta receives params
+/// directly, which is enough for a valid preview card — the thing that
+/// actually costs conversions when a creator shares their link.
+export function meta({ params }) {
+  const handle = String(params?.username || "").toLowerCase();
   const url = `https://tiplyfi.vercel.app/${handle}`;
-
-  const name = c?.full_name || c?.username || handle;
-  const title = c ? `Support ${name} on Tiplyfi` : "Tiplyfi";
-  const description = c
-    ? c.bio?.trim() ||
-      `Send ${name} a tip in USDC. It arrives in under a second, straight to their wallet.`
-    : "Get paid in USDC, in under a second. One link, 6% flat, no card processor.";
-
-  // Thin pages earn nothing from indexing, but they must still produce a
-  // valid preview card — that's the shared-link path, not the search path.
-  const thin =
-    !c || (!c.bio?.trim() && !c.category && Number(c.tip_count || 0) === 0);
+  const title = handle ? `Support @${handle} on Tiplyfi` : "Tiplyfi";
+  const description = handle
+    ? `Send @${handle} a tip in USDC. It arrives in under a second, straight to their wallet — no account needed.`
+    : "Get paid in USDC, in under a second.";
 
   return [
     { title },
     { name: "description", content: description },
     { tagName: "link", rel: "canonical", href: url },
-    ...(thin ? [{ name: "robots", content: "noindex, follow" }] : []),
     { property: "og:type", content: "profile" },
     { property: "og:title", content: title },
     { property: "og:description", content: description },
     { property: "og:url", content: url },
     { property: "og:site_name", content: "Tiplyfi" },
-    // summary, not summary_large_image: the large variant requires an image
-    // and is rejected without one, which is why the validator found no card.
     { name: "twitter:card", content: "summary" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
