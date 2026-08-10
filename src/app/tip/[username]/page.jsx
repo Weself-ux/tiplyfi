@@ -31,7 +31,7 @@ const NETWORKS = [
 /// tree and any focused input loses focus after one keystroke.
 function Shell({ accent, children }) {
   return (
-    <div className="relative min-h-screen bg-ink overflow-hidden flex flex-col items-center justify-center px-4 py-10">
+    <div className="relative min-h-screen bg-ink overflow-hidden flex flex-col items-center justify-center px-4 py-6">
       <div
         aria-hidden
         className="pointer-events-none absolute -top-[26%] left-1/2 -translate-x-1/2 w-[85vw] h-[70vw] rounded-full drift"
@@ -341,7 +341,7 @@ export default function TipPage({ params }) {
       >
         {/* ── Creator ───────────────────────────────────────────── */}
         <div
-          className="p-6 md:p-8 flex flex-col justify-center"
+          className="p-6 md:p-7 flex flex-col justify-center"
           style={{
             background: `linear-gradient(155deg, ${accent}E6, ${accent}59 55%, rgba(59,130,246,0.35))`,
           }}
@@ -488,7 +488,7 @@ export default function TipPage({ params }) {
             ))}
           </div>
 
-          <div className="p-6 flex-1 flex flex-col">
+          <div className="p-5 flex-1 flex flex-col">
             {underReview && (
               <div className="mb-4 px-3 py-2.5 text-[13px] text-amber-200/90 bg-amber-500/10 border border-amber-500/25 rounded-lg">
                 This page is being reviewed. Tipping is paused.
@@ -659,7 +659,10 @@ export default function TipPage({ params }) {
                     className="mt-0.5 accent-[var(--violet)]"
                   />
                   <span className="text-[var(--muted)] leading-snug text-[11px]">
-                    Add ${weiToDisplay(amounts.platformTipWei)} to support Tiplyfi
+                    {/* Show what ticking it would cost, not the current value,
+                        which is zero while the box is unticked. */}
+                    Add ${weiToDisplay(computeTipAmounts(finalAmount, feePaidByFan, true).platformTipWei)}{" "}
+                    to support Tiplyfi
                   </span>
                 </label>
               </div>
@@ -689,7 +692,7 @@ export default function TipPage({ params }) {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col items-center gap-3">
+      <div className="mt-4 flex flex-col items-center gap-2.5">
         <button
           onClick={() => (window.location.href = "/signup")}
           className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-white transition-colors"
