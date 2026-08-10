@@ -83,25 +83,10 @@ export async function validateSession(request) {
   };
 }
 
-// Validate email format
-export function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 // Validate username format
 export function isValidUsername(username) {
   return /^[a-z0-9_]{5,30}$/.test(username);
-}
-
-// Validate password strength
-export function validatePassword(password) {
-  if (!password || password.length < 8)
-    return "Password must be at least 8 characters.";
-  if (!/[0-9]/.test(password))
-    return "Password must include at least one number.";
-  if (!/[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]/.test(password))
-    return "Password must include at least one special character.";
-  return null;
 }
 
 // Get client IP from request
