@@ -128,7 +128,20 @@ export async function startGoogleLogin(sdk) {
   sdk.performLogin(provider);
 }
 
-export const isLoginPending = () => read(STORE.pending) === "1";
+/// Only true if we are genuinely returning from Google: the flag alone is not
+/// enough, because a failed attempt leaves it set. Google's response arrives
+/// in the URL hash, so that is the real signal.
+export function isLoginPending() {
+  if (read(STORE.pending) !== "1") return false;
+  const hasOauthHash = /[#&](id_token|access_token|error)=/.test(
+    window.location.hash || "",
+  );
+  if (!hasOauthHash) {
+    clear(STORE.pending);
+    return false;
+  }
+  return true;
+}
 export const clearLoginPending = () => clear(STORE.pending);
 
 export function clearDeviceSession() {

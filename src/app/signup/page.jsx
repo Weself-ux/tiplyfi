@@ -80,7 +80,16 @@ export default function SignupPage() {
         sdkRef.current = sdk;
         // A pending flag means we have just come back from Google and the
         // callback is about to fire — keep the spinner up until it does.
-        if (isLoginPending()) setBusy(true);
+        if (isLoginPending()) {
+          setBusy(true);
+          // The callback fires on its own; this only stops a silent hang.
+          setTimeout(() => {
+            if (cancelled) return;
+            clearLoginPending();
+            setBusy(false);
+            setError("Sign-in didn't complete. Please try again.");
+          }, 30000);
+        }
         setReady(true);
       } catch (e) {
         console.error("[tiplyfi] SDK init failed", e);
