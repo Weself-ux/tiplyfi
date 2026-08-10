@@ -16,6 +16,9 @@ function cleanUrl(value) {
   try {
     const url = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
     if (url.protocol !== "https:") return null;
+    // A hostname with no dot isn't a real link — "placeholder" would
+    // otherwise parse cleanly as https://placeholder.
+    if (!url.hostname.includes(".")) return null;
     return url.toString();
   } catch {
     return null;

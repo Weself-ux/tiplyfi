@@ -9,9 +9,19 @@ export async function loader({ request, params }) {
     }
 
     const rows = await sql(
-      `SELECT username, wallet_address, full_name, created_at, fee_mode, status,
-              bio, category, accent_color, thank_you_message, social_links
-         FROM users WHERE username = $1`,
+      // Supporter counts are social proof on the tip page, so they come back
+      // with the creator rather than in a second request.
+      `SELECT u.username, u.wallet_address, u.full_name, u.created_at,
+              u.fee_mode, u.status, u.bio, u.category, u.accent_color,
+              u.thank_you_message, u.social_links,
+              (SELECT count(*) FROM tips t
+                WHERE t.creator_username = u.username AND t.status = 'confirmed')
+                AS tip_count,
+              (SELECT count(DISTINCT t.tipper_address) FROM tips t
+                WHERE t.creator_username = u.username AND t.status = 'confirmed'
+                  AND t.tipper_address IS NOT NULL)
+                AS supporter_count
+         FROM users u WHERE u.username = $1`,
       [username.toLowerCase()],
     );
 
@@ -35,6 +45,8 @@ export async function loader({ request, params }) {
       accentColor: user.accent_color || "#7c3aed",
       thankYouMessage: user.thank_you_message || null,
       socialLinks: user.social_links || {},
+      tipCount: Number(user.tip_count) || 0,
+      supporterCount: Number(user.supporter_count) || 0,
       tipRouterAddress: process.env.TIP_ROUTER_ADDRESS || "",
     });
   } catch (err) {

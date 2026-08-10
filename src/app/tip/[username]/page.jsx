@@ -26,6 +26,48 @@ const NETWORKS = [
   { id: "solana", label: "Solana", available: false },
 ];
 
+ /// Defined at module level, not inside TipPage. A component declared inside
+/// another is a new function on every render, so React remounts the whole
+/// tree and any focused input loses focus after one keystroke.
+function Shell({ accent, children }) {
+  return (
+    <div className="relative min-h-screen bg-ink overflow-hidden flex flex-col items-center justify-center px-4 py-10">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-[26%] left-1/2 -translate-x-1/2 w-[85vw] h-[70vw] rounded-full drift"
+        style={{
+          background: `radial-gradient(circle, ${accent}55 0%, ${accent}00 66%)`,
+          filter: "blur(50px)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-[30%] -right-[18%] w-[55vw] h-[55vw] rounded-full drift-slow"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(59,130,246,0.30) 0%, rgba(59,130,246,0) 70%)",
+          filter: "blur(50px)",
+        }}
+      />
+      <svg
+        aria-hidden
+        className="pointer-events-none absolute inset-0 w-full h-full grid-mask"
+        style={{ opacity: 0.45 }}
+      >
+        <defs>
+          <pattern id="tip-grid" width="64" height="64" patternUnits="userSpaceOnUse">
+            <path d="M64 0H0V64" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#tip-grid)" />
+      </svg>
+      <div className="relative z-10 w-full flex flex-col items-center">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function TipPage({ params }) {
   const { username } = params;
   const [mode, setMode] = useState("wallet");
@@ -223,48 +265,11 @@ export default function TipPage({ params }) {
     }
   }
 
-  function Shell({ children }) {
-    return (
-      <div className="relative min-h-screen bg-ink overflow-hidden flex flex-col items-center justify-center px-4 py-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-[26%] left-1/2 -translate-x-1/2 w-[85vw] h-[70vw] rounded-full drift"
-          style={{
-            background: `radial-gradient(circle, ${accent}55 0%, ${accent}00 66%)`,
-            filter: "blur(50px)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-[30%] -right-[18%] w-[55vw] h-[55vw] rounded-full drift-slow"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(59,130,246,0.30) 0%, rgba(59,130,246,0) 70%)",
-            filter: "blur(50px)",
-          }}
-        />
-        <svg
-          aria-hidden
-          className="pointer-events-none absolute inset-0 w-full h-full grid-mask"
-          style={{ opacity: 0.45 }}
-        >
-          <defs>
-            <pattern id="tip-grid" width="64" height="64" patternUnits="userSpaceOnUse">
-              <path d="M64 0H0V64" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#tip-grid)" />
-        </svg>
-        <div className="relative z-10 w-full flex flex-col items-center">
-          {children}
-        </div>
-      </div>
-    );
-  }
+
 
   if (creatorError?.message === "not_found") {
     return (
-      <Shell>
+       <Shell accent={accent}>
         <div className="glass glass-lit rounded-3xl p-10 max-w-[400px] w-full text-center rise">
           <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-5">
             <X size={22} className="text-[var(--muted)]" />
@@ -286,7 +291,7 @@ export default function TipPage({ params }) {
 
   if (creatorError) {
     return (
-      <Shell>
+      	<Shell accent={accent}>
         <div className="glass glass-lit rounded-3xl p-10 max-w-[400px] w-full text-center rise">
           <h2 className="display-md text-white text-xl mb-2">
             Couldn't load this page
@@ -307,7 +312,7 @@ export default function TipPage({ params }) {
 
   if (creatorLoading || !creator) {
     return (
-      <Shell>
+      	<Shell accent={accent}>
         <Loader2 size={24} className="text-[var(--violet-lo)] animate-spin" />
       </Shell>
     );
@@ -317,7 +322,7 @@ export default function TipPage({ params }) {
   const longBio = (creator.bio || "").length > 150;
 
   return (
-    <Shell>
+    	<Shell accent={accent}>
       {showPicker && (
         <WalletPicker
           accent={accent}
@@ -343,7 +348,17 @@ export default function TipPage({ params }) {
         >
           {/* Compact on mobile so the form sits near the fold */}
           <div className="flex md:block items-center gap-4 md:text-center">
-            <div className="w-14 h-14 md:w-[72px] md:h-[72px] rounded-full bg-white/20 border border-white/35 flex items-center justify-center display-md text-white text-xl md:text-2xl backdrop-blur-sm md:mx-auto md:mb-4 flex-shrink-0">
+            <div
+              className="w-14 h-14 md:w-[132px] md:h-[132px] rounded-full flex items-center justify-center display-md text-white text-xl md:text-[54px] md:mx-auto md:mb-5 flex-shrink-0 border border-white/25 md:border-white/15"
+              style={{
+                // Soft-edged so it melts into the gradient rather than
+                // sitting on top of it as a hard disc.
+                background:
+                  "radial-gradient(circle at 32% 28%, rgba(255,255,255,0.26), rgba(255,255,255,0.06) 62%, rgba(255,255,255,0.02) 100%)",
+                backdropFilter: "blur(6px)",
+                boxShadow: "0 22px 60px -24px rgba(0,0,0,0.55)",
+              }}
+            >
               {initial}
             </div>
             <div className="min-w-0">
@@ -404,7 +419,36 @@ export default function TipPage({ params }) {
             </div>
           )}
 
-          <div className="hidden md:flex items-center justify-center gap-2 mt-6 pt-5 border-t border-white/15">
+          {creator.tipCount > 0 && (
+            <div className="hidden md:flex items-center justify-center gap-6 mt-6 pt-5 border-t border-white/15">
+              <div className="text-center">
+                <p className="font-mono-t text-white text-lg">
+                  {creator.tipCount}
+                </p>
+                <p className="text-[10px] text-white/60 mt-0.5">
+                  {creator.tipCount === 1 ? "tip" : "tips"}
+                </p>
+              </div>
+              {creator.supporterCount > 0 && (
+                <div className="text-center">
+                  <p className="font-mono-t text-white text-lg">
+                    {creator.supporterCount}
+                  </p>
+                  <p className="text-[10px] text-white/60 mt-0.5">
+                    {creator.supporterCount === 1 ? "supporter" : "supporters"}
+                  </p>
+                </div>
+              )}
+              <div className="text-center">
+                <p className="font-mono-t text-white text-lg">
+                  {new Date(creator.createdAt).getFullYear()}
+                </p>
+                <p className="text-[10px] text-white/60 mt-0.5">since</p>
+              </div>
+            </div>
+          )}
+
+          <div className="hidden md:flex items-center justify-center gap-2 mt-5 pt-4 border-t border-white/15">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--settle)] settle-pulse" />
             <span className="font-mono-t text-[10px] text-white/75">
               settles in under a second
