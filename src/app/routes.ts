@@ -5,8 +5,6 @@ export default [
   route('dashboard', './dashboard/page.jsx'),
   route('login', './login/page.jsx'),
   route('signup', './signup/page.jsx'),
-  route('reset-password', './reset-password/page.jsx'),
-  route('forgot-password', './forgot-password/page.jsx'),
   route('howitworks', './howitworks/page.jsx'),
   route('settings', './settings/page.jsx'),
   route('profile', './profile/page.jsx'),
