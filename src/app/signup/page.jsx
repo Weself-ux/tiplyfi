@@ -37,14 +37,25 @@ export default function SignupPage() {
         return;
       }
 
+      // The SDK types spell this oAuthInfo with a capital A; Circle's own
+      // docs write oauthInfo. Read both so a doc fix can't break sign-in.
+      const oauth = result.oAuthInfo || result.oauthInfo || {};
       authRef.current = {
         userToken: result.userToken,
         encryptionKey: result.encryptionKey,
-        provider: result.oauthInfo?.provider || "google",
-        socialUserUUID: result.oauthInfo?.socialUserUUID || null,
-        email: result.oauthInfo?.socialUserInfo?.email || null,
-        name: result.oauthInfo?.socialUserInfo?.name || null,
+        provider: oauth.provider || "google",
+        socialUserUUID: oauth.socialUserUUID || null,
+        email: oauth.socialUserInfo?.email || null,
+        name: oauth.socialUserInfo?.name || null,
       };
+
+      if (!authRef.current.socialUserUUID) {
+        setError(
+          `Google returned no user id. Fields: ${Object.keys(oauth).join(",") || "none"}`,
+        );
+        setBusy(false);
+        return;
+      }
 
       try {
         const res = await fetch("/api/auth/circle/login", {
