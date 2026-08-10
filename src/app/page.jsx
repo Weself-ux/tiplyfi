@@ -1,446 +1,402 @@
-import { useState } from "react";
-import {
-  Zap,
-  Shield,
-  DollarSign,
-  Globe,
-  Plus,
-  Minus,
-  ArrowRight,
-  Mail,
-  Wallet,
-  Check,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Check } from "lucide-react";
+import Atmosphere from "../utils/Atmosphere";
 
-const FEATURES = [
-  {
-    icon: Zap,
-    title: "Instant Settlement",
-    desc: "Tips land in your wallet in under a second on Arc. No delays, no holds, no waiting.",
-  },
-  {
-    icon: DollarSign,
-    title: "Zero Platform Fees",
-    desc: "Wallet-to-wallet on Arc. Every cent of every tip goes directly to you.",
-  },
-  {
-    icon: Shield,
-    title: "Private by Default",
-    desc: "Fans only see your username. Your wallet address stays completely hidden.",
-  },
-  {
-    icon: Globe,
-    title: "Global & Borderless",
-    desc: "Anyone anywhere can tip you in USDC. No bank account or ID required.",
-  },
-];
+/// Pulls the button a few pixels toward the cursor. CSS does the movement;
+/// this only writes the offset.
+function useMagnet(strength = 0.28) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-const FAQS = [
-  {
-    q: "What is Tiplyfi?",
-    a: "Tiplyfi is a creator tipping platform built on Arc Testnet. Creators get a unique tip link, receive USDC directly to their wallet, and fans can tip using any wallet, chain, or credit card.",
-  },
-  {
-    q: "Can fans tip without a crypto wallet?",
-    a: 'Yes. Our "No Wallet Needed" mode — powered by Circle Programmable Wallets — lets anyone send USDC to a creator on Arc Testnet without needing Wallet or any crypto.',
-  },
-  {
-    q: "Do I need crypto experience?",
-    a: "Not at all. Sign up with your email, generate a wallet in one click, share your link. No technical knowledge needed.",
-  },
-  {
-    q: "What is USDC?",
-    a: "USDC is a stablecoin pegged 1:1 to the US dollar. A $5 tip is always worth $5. On Arc, USDC is also the native gas token.",
-  },
-  {
-    q: "Is Arc Testnet real money?",
-    a: "Arc Testnet uses test USDC with no real monetary value — perfect for building and testing before mainnet.",
-  },
-];
+    function move(e) {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", (e.clientX - (r.left + r.width / 2)) * strength);
+      el.style.setProperty("--my", (e.clientY - (r.top + r.height / 2)) * strength);
+    }
+    function reset() {
+      el.style.setProperty("--mx", 0);
+      el.style.setProperty("--my", 0);
+    }
+    el.addEventListener("mousemove", move);
+    el.addEventListener("mouseleave", reset);
+    return () => {
+      el.removeEventListener("mousemove", move);
+      el.removeEventListener("mouseleave", reset);
+    };
+  }, [strength]);
+  return ref;
+}
 
-export default function Landing() {
-  const [openFaq, setOpenFaq] = useState(null);
+/// Reveals children once they scroll into view. One observer, no library.
+function useReveal() {
+  const ref = useRef(null);
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && setSeen(true),
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return [ref, seen];
+}
+
+function Section({ children, className = "" }) {
+  const [ref, seen] = useReveal();
+  return (
+    <section
+      ref={ref}
+      className={`max-w-[1180px] mx-auto px-6 ${className}`}
+      style={{
+        opacity: seen ? 1 : 0,
+        transform: seen ? "translateY(0)" : "translateY(28px)",
+        transition: "opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo)",
+      }}
+    >
+      {children}
+    </section>
+  );
+}
+
+export default function LandingPage() {
+  const [handle, setHandle] = useState("");
+  const magnetRef = useMagnet();
+
+  const shown = handle || "yourname";
+
+  function claim() {
+    const clean = handle.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    window.location.href = clean ? `/signup?u=${clean}` : "/signup";
+  }
 
   return (
-    <div className="min-h-screen bg-white font-inter">
-      {/* Nav */}
-      <nav
-        className="sticky top-0 z-50 bg-white/90 border-b border-[#E5E7EB]"
-        style={{
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-        }}
-      >
-        <div className="max-w-[1100px] mx-auto px-6 flex items-center justify-between h-16">
-          <a href="/" className="flex items-center gap-2.5">
-            <img
-              src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tiplyfi"
-              className="w-7 h-7 rounded-lg"
-            />
-            <span className="text-lg font-bold text-[#111827] tracking-tight">
-              Tiplyfi
-            </span>
-          </a>
-          <div className="flex items-center gap-2">
-            <a
-              href="/login"
-              className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#111827] transition-colors rounded-lg"
-            >
-              Log in
-            </a>
-            <a href="/signup"
-              className="px-4 py-2 text-sm font-bold text-white bg-[#7c3aed] rounded-lg hover:bg-[#6d28d9] transition-colors shadow-sm"
-            >
-              Get Started
-            </a>
-          </div>
+    <Atmosphere>
+      {/* ── Nav ─────────────────────────────────────────────────── */}
+      <nav className="max-w-[1180px] mx-auto px-6 h-20 flex items-center justify-between fade" style={{ "--d": "0.1s" }}>
+        <span className="display-md text-white text-[19px] tracking-tight">
+          Tiplyfi
+        </span>
+        <div className="flex items-center gap-7">
+          <button
+            onClick={() => (window.location.href = "/howitworks")}
+            className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+          >
+            How it works
+          </button>
+          <button
+            onClick={() => (window.location.href = "/login")}
+            className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+          >
+            Sign in
+          </button>
+          <button
+            onClick={() => (window.location.href = "/signup")}
+            className="btn-primary text-sm font-semibold px-5 py-2.5 rounded-full"
+          >
+            Get your link
+          </button>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-[1100px] mx-auto px-6 pt-20 pb-20 flex flex-col lg:flex-row items-center gap-14">
-        <div className="flex-1 text-center lg:text-left max-w-xl">
-          <div className="inline-flex items-center gap-2 bg-[#F5F3FF] text-[#7c3aed] rounded-full px-3.5 py-1.5 text-xs font-semibold mb-6 border border-[#DDD6FE]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7c3aed]"></span>
-            Now on Arc Testnet
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-[#111827] tracking-tight leading-[1.1] mb-5">
-            Simply accept tips from anyone, anywhere with{" "}
-            <span className="text-[#7c3aed]">TIPLYFI</span>
-          </h1>
-          <p className="text-base text-[#6B7280] leading-relaxed mb-8">
-            Tiplyfi is the simplest way for creators to receive USDC tips globally. Fans can tip using any wallet, any chain, or a credit card 
-            — powered by Circle and built on Arc.
+      {/* ── Hero ────────────────────────────────────────────────── */}
+      <div className="max-w-[1180px] mx-auto px-6 pt-16 pb-28 grid lg:grid-cols-[58%_42%] gap-14 items-center">
+        <div>
+          <p className="eyebrow text-[var(--violet-lo)] rise" style={{ "--d": "0.15s" }}>
+            USDC on Arc
+            <span className="mx-2 text-[var(--muted)]">·</span>
+            <span className="text-settle">settles in under a second</span>
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-6">
-            <a
-              href="/signup"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[#7c3aed] rounded-xl hover:bg-[#6d28d9] transition-colors shadow-sm shadow-[#7c3aed]/25"
-            >
-              Create My Tiplyfi <ArrowRight size={15} />
-            </a>
-            <a
-              href="/howitworks"
-              className="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-[#374151] bg-white border border-[#E5E7EB] rounded-xl hover:border-[#C4B5FD] hover:text-[#7c3aed] transition-colors"
-            >
-              See How It Works
-            </a>
-          </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center lg:justify-start">
-            {[
-              "Private",
-              "Zero platform fees",
-              "No credit card needed to tip",
-            ].map((t) => (
-              <span
-                key={t}
-                className="flex items-center gap-1 text-xs text-[#9CA3AF]"
-              >
-                <Check size={11} className="text-green-500" /> {t}
+
+          <h1 className="display-xl text-white text-[clamp(2.9rem,6.2vw,5rem)] mt-6">
+            <span className="block overflow-hidden">
+              <span className="reveal-line" style={{ "--d": "0.25s" }}>
+                Every tip lands
               </span>
-            ))}
+            </span>
+            <span className="block overflow-hidden">
+              <span className="reveal-line" style={{ "--d": "0.38s" }}>
+                in your wallet.
+              </span>
+            </span>
+            <span className="block overflow-hidden">
+              <span
+                className="reveal-line bg-gradient-to-r from-[var(--violet-lo)] to-[var(--azure)] bg-clip-text text-transparent"
+                style={{ "--d": "0.51s" }}
+              >
+                Not ours.
+              </span>
+            </span>
+          </h1>
+
+          <p
+            className="text-[var(--muted)] text-[17px] leading-relaxed mt-7 max-w-[440px] rise"
+            style={{ "--d": "0.7s" }}
+          >
+            Share one link. Supporters send USDC straight to you — no account,
+            no card processor, no waiting for a payout.
+          </p>
+
+          {/* The signature: claim your link */}
+          <div className="mt-9 rise" style={{ "--d": "0.85s" }}>
+            <div className="glass glass-lit rounded-2xl p-1.5 flex items-center gap-2 max-w-[520px] focus-within:border-[rgba(167,139,250,0.5)] transition-colors">
+              <span className="font-mono-t text-[15px] text-[var(--muted)] pl-4 select-none whitespace-nowrap">
+                tiplyfi.app/
+              </span>
+              <input
+                value={handle}
+                onChange={(e) =>
+                  setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))
+                }
+                onKeyDown={(e) => e.key === "Enter" && claim()}
+                placeholder="yourname"
+                maxLength={30}
+                aria-label="Choose your Tiplyfi username"
+                className="flex-1 bg-transparent font-mono-t text-[15px] text-white placeholder:text-[rgba(139,138,165,0.5)] py-3 min-w-0"
+              />
+              <button
+                onClick={claim}
+                className="btn-primary text-sm font-semibold px-5 py-3 rounded-xl flex items-center gap-1.5 flex-shrink-0"
+              >
+                Claim <ArrowRight size={15} />
+              </button>
+            </div>
+            <p className="text-xs text-[rgba(139,138,165,0.75)] mt-3 pl-1">
+              Free. Sign in with Google and your wallet is created for you.
+            </p>
           </div>
         </div>
 
-        {/* Live mockup */}
-        <div className="flex-1 max-w-[380px] w-full">
-          <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-xl shadow-[#7c3aed]/5 overflow-hidden">
-            <div className="bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] px-6 py-5 text-center">
-              <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-xl font-bold text-white mx-auto mb-2">
-                E
+        {/* Live preview of the page being claimed */}
+        <div className="rise lg:mt-10" style={{ "--d": "0.55s" }}>
+          <div
+            className="glass glass-lit rounded-[26px] overflow-hidden max-w-[380px] mx-auto"
+            style={{
+              transform: "rotate(1.6deg)",
+              boxShadow: "0 50px 100px -40px rgba(0,0,0,0.9)",
+            }}
+          >
+            <div
+              className="px-7 py-8 text-center"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(124,58,237,0.9), rgba(59,130,246,0.75))",
+              }}
+            >
+              <div className="w-14 h-14 rounded-full bg-white/20 border border-white/30 flex items-center justify-center display-md text-white text-xl mx-auto mb-3 backdrop-blur-sm">
+                {shown[0].toUpperCase()}
               </div>
-              <p className="text-white font-semibold text-sm">@creator</p>
-              <p className="text-white/60 text-xs">Creator · Arc Testnet</p>
+              <p className="display-md text-white text-[17px]">@{shown}</p>
+              <p className="text-white/65 text-xs mt-1">Support my work</p>
             </div>
-            <div className="p-5">
-              <div className="flex border-b border-[#E5E7EB] mb-4">
-                <div className="flex-1 text-center py-2 border-b-2 border-[#7c3aed]">
-                  <p className="text-xs font-semibold text-[#7c3aed] flex items-center justify-center gap-1">
-                    <Wallet size={11} /> Wallet
-                  </p>
-                </div>
-                <div className="flex-1 text-center py-2 relative">
-                  <p className="text-xs font-semibold text-[#6B7280] flex items-center justify-center gap-1">
-                    <Zap size={11} /> No Wallet Needed
-                  </p>
-                  <span className="absolute top-1.5 right-1 bg-[#7c3aed] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                    NEW
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5 mb-3">
-                {["$1", "$5", "$10", "$25"].map((a, i) => (
+
+            <div className="p-6">
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {["1", "5", "10", "25"].map((a, i) => (
                   <div
                     key={a}
-                    className={`text-center py-2 rounded-lg border text-xs font-bold ${i === 1 ? "border-[#7c3aed] bg-[#F5F3FF] text-[#7c3aed]" : "border-[#E5E7EB] text-[#374151]"}`}
+                    className={`py-2.5 rounded-xl text-center font-mono-t text-sm border transition-colors ${
+                      i === 1
+                        ? "border-[var(--violet-lo)] bg-[rgba(124,58,237,0.18)] text-white"
+                        : "border-[var(--line)] text-[var(--muted)]"
+                    }`}
                   >
-                    {a}
+                    ${a}
                   </div>
                 ))}
               </div>
-              <div className="h-8 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg mb-3 flex items-center px-3">
-                <span className="text-xs text-[#9CA3AF]">
-                  Keep up the great work! 🔥
-                </span>
-              </div>
-              <div className="h-10 bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] rounded-xl flex items-center justify-center">
-                <span className="text-xs font-bold text-white">
-                  Send $5 USDC to @creator
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* No Wallet Feature callout */}
-      <section className="bg-gradient-to-br from-[#7c3aed] to-[#3b82f6]">
-        <div className="max-w-[1100px] mx-auto px-6 py-16">
-          <div className="flex flex-col lg:flex-row items-center gap-10">
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-white/20 text-white rounded-full px-3.5 py-1.5 text-xs font-semibold mb-5">
-                <Zap size={12} /> Powered by Circle Programmable Wallets
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
-                Your fans don't need a crypto wallet to tip you
-              </h2>
-              <p className="text-white/80 text-sm leading-relaxed mb-6 max-w-lg">
-                With Tiplyfi's "No Wallet Needed" mode, anyone can send USDC
-                directly to you on Arc Testnet. No Wallet. No seed phrase. No
-                gas fees to worry about. The tip settles on-chain in under a
-                second — powered by Circle.
-              </p>
-              <a
-                href="/signup"
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-[#7c3aed] bg-white rounded-xl hover:bg-[#F5F3FF] transition-colors shadow-sm"
-              >
-                Get My Tip Link <ArrowRight size={15} />
-              </a>
-            </div>
-            <div className="flex-1 max-w-sm w-full">
-              <div className="space-y-3">
-                {[
-                  {
-                    n: "1",
-                    t: "Fan visits your tip link",
-                    d: "Share /tip/yourname on Twitter, YouTube, Discord — anywhere.",
-                  },
-                  {
-                    n: "2",
-                    t: 'Picks "No Wallet Needed"',
-                    d: "No Wallet popup. No seed phrase. Just amount + send.",
-                  },
-                  {
-                    n: "3",
-                    t: "USDC lands in your wallet",
-                    d: "Circle settles the USDC on Arc Testnet in seconds.",
-                  },
-                ].map((s) => (
-                  <div
-                    key={s.n}
-                    className="flex gap-3 items-start bg-white/10 border border-white/20 rounded-xl p-4"
-                  >
-                    <div className="w-7 h-7 rounded-full bg-white/25 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                      {s.n}
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-semibold mb-0.5">
-                        {s.t}
-                      </p>
-                      <p className="text-white/70 text-xs leading-relaxed">
-                        {s.d}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
-        <div className="max-w-[1100px] mx-auto px-6 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-[#111827] tracking-tight mb-2">
-              Built for creators who want to get paid
-            </h2>
-            <p className="text-sm text-[#6B7280]">
-              Simple, fast, and fee-free on Arc
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {FEATURES.map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl border border-[#E5E7EB] p-6 hover:border-[#C4B5FD] hover:shadow-sm transition-all"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[#F5F3FF] flex items-center justify-center mb-4">
-                    <Icon size={20} className="text-[#7c3aed]" />
-                  </div>
-                  <h3 className="text-sm font-bold text-[#111827] mb-2">
-                    {f.title}
-                  </h3>
-                  <p className="text-sm text-[#6B7280] leading-relaxed">
-                    {f.desc}
-                  </p>
+              <div className="space-y-2 text-[13px] mb-5">
+                <div className="flex justify-between text-[var(--muted)]">
+                  <span>Tip to @{shown}</span>
+                  <span className="font-mono-t text-white">$4.70</span>
                 </div>
-              );
-            })}
+                <div className="flex justify-between text-[var(--muted)]">
+                  <span>Tiplyfi fee</span>
+                  <span className="font-mono-t text-white">$0.30</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-[var(--line)] text-white font-semibold">
+                  <span>They pay</span>
+                  <span className="font-mono-t">$5.00</span>
+                </div>
+              </div>
+
+              <div className="btn-primary rounded-xl py-3 text-center text-sm font-bold">
+                Send $5 USDC
+              </div>
+
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--settle)] settle-pulse" />
+                <span className="font-mono-t text-[11px] text-settle">
+                  arrives in 0.4s
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Steps */}
-      <section className="bg-white border-t border-[#E5E7EB]">
-        <div className="max-w-[760px] mx-auto px-6 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-[#111827] tracking-tight mb-2">
-              Up in minutes, not hours
+      {/* ── The claim nobody else can make ──────────────────────── */}
+      <Section className="py-24">
+        <p className="eyebrow text-[var(--muted)] mb-5">Built so we can't</p>
+        <h2 className="display-lg text-white text-[clamp(1.9rem,3.6vw,2.9rem)] max-w-[620px]">
+          Other platforms promise they won't touch your money.
+          <span className="text-settle"> We can't.</span>
+        </h2>
+
+        <div className="grid md:grid-cols-3 gap-5 mt-12">
+          {[
+            {
+              t: "No withdrawal function",
+              d: "The contract pays whoever signs the transaction, and that's only ever you. There is no admin path to your funds — not for us, not under pressure.",
+            },
+            {
+              t: "The rules can't change",
+              d: "It isn't upgradeable. Whatever the contract does today is what it will still do in five years, regardless of who runs Tiplyfi.",
+            },
+            {
+              t: "The fee is capped in code",
+              d: "6% today, and a hard ceiling of 10% compiled into the bytecode. We can lower it. We can never raise it past that.",
+            },
+          ].map((c) => (
+            <div
+              key={c.t}
+              className="glass glass-lit rounded-2xl p-6 hover:border-[rgba(167,139,250,0.35)] transition-colors duration-500"
+            >
+              <Check size={16} className="text-settle mb-4" />
+              <h3 className="display-md text-white text-[16px] mb-2">{c.t}</h3>
+              <p className="text-sm text-[var(--muted)] leading-relaxed">{c.d}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="glass rounded-2xl px-6 py-4 mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="text-xs text-[var(--muted)]">Read it yourself</span>
+          <code className="font-mono-t text-xs text-[var(--violet-lo)] break-all">
+            0x707BBFCE1Ca35e72Bd40B1B6671b0807896a2f98
+          </code>
+        </div>
+      </Section>
+
+      {/* ── The maths ───────────────────────────────────────────── */}
+      <Section className="py-24">
+        <div className="grid lg:grid-cols-[42%_58%] gap-14 items-center">
+          <div>
+            <p className="eyebrow text-[var(--muted)] mb-5">One fee, no stack</p>
+            <h2 className="display-lg text-white text-[clamp(1.9rem,3.6vw,2.9rem)]">
+              6% flat.
+              <br />
+              Nothing on top.
             </h2>
-            <p className="text-sm text-[#6B7280]">
-              Three steps to start receiving tips
+            <p className="text-[var(--muted)] leading-relaxed mt-6 max-w-[380px]">
+              Card platforms charge a platform fee, then a processor takes
+              another cut plus a fixed 30 cents. On small tips that fixed
+              charge is what hurts.
             </p>
           </div>
-          <div className="flex flex-col gap-8 relative">
-            <div className="absolute left-[19px] top-10 bottom-10 w-0.5 bg-[#E5E7EB]"></div>
+
+          <div className="glass glass-lit rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-[var(--line)] flex justify-between">
+              <span className="eyebrow text-[var(--muted)]">On a $5 tip</span>
+              <span className="eyebrow text-[var(--muted)]">You keep</span>
+            </div>
             {[
-              {
-                step: "01",
-                title: "Create your account",
-                desc: "Sign up with your email and pick a username. Your username becomes your public tip link.",
-              },
-              {
-                step: "02",
-                title: "Connect or generate a wallet",
-                desc: "Connect Wallet or generate a fresh wallet. Your address stays private — fans never see it.",
-              },
-              {
-                step: "03",
-                title: "Share your link and get paid",
-                desc: "Drop your link anywhere. Fans tip in USDC — with or without a wallet — and it settles on Arc in seconds.",
-              },
-            ].map((s, i) => (
-              <div key={i} className="flex gap-6 items-start relative">
-                <div className="w-10 h-10 rounded-full bg-[#7c3aed] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 z-10 shadow-sm shadow-[#7c3aed]/30">
-                  {s.step}
-                </div>
-                <div className="pt-1.5">
-                  <h3 className="text-base font-bold text-[#111827] mb-1">
-                    {s.title}
-                  </h3>
-                  <p className="text-sm text-[#6B7280] leading-relaxed">
-                    {s.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <a
-              href="/howitworks"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7c3aed] hover:text-[#6d28d9] transition-colors"
-            >
-              Full guide <ArrowRight size={13} />
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
-        <div className="max-w-[680px] mx-auto px-6 py-20">
-          <h2 className="text-2xl font-bold text-[#111827] tracking-tight mb-8 text-center">
-            Frequently Asked Questions
-          </h2>
-          <div className="flex flex-col gap-2">
-            {FAQS.map((faq, i) => (
+              { n: "Tiplyfi", v: "$4.70", best: true },
+              { n: "Ko-fi", v: "$4.56", best: false },
+              { n: "Buy Me a Coffee", v: "$4.31", best: false },
+              { n: "Patreon", v: "$4.06", best: false },
+            ].map((r) => (
               <div
-                key={i}
-                className={`bg-white rounded-2xl border transition-all ${openFaq === i ? "border-[#C4B5FD] shadow-sm" : "border-[#E5E7EB]"}`}
+                key={r.n}
+                className="px-6 py-4 flex items-center justify-between border-b border-[var(--line)] last:border-0"
               >
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left"
+                <span
+                  className={`text-sm ${r.best ? "text-white font-semibold" : "text-[var(--muted)]"}`}
                 >
-                  <span className="text-sm font-semibold text-[#111827] pr-4">
-                    {faq.q}
-                  </span>
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${openFaq === i ? "bg-[#7c3aed] text-white" : "bg-[#F9FAFB] border border-[#E5E7EB] text-[#6B7280]"}`}
-                  >
-                    {openFaq === i ? <Minus size={11} /> : <Plus size={11} />}
-                  </div>
-                </button>
-                {openFaq === i && (
-                  <div className="px-5 pb-5">
-                    <p className="text-sm text-[#6B7280] leading-relaxed border-t border-[#F3F4F6] pt-4">
-                      {faq.a}
-                    </p>
-                  </div>
-                )}
+                  {r.n}
+                </span>
+                <span
+                  className={`font-mono-t text-[15px] ${r.best ? "text-settle" : "text-[var(--muted)]"}`}
+                >
+                  {r.v}
+                </span>
               </div>
             ))}
           </div>
         </div>
-      </section>
+        <p className="text-xs text-[rgba(139,138,165,0.7)] mt-5">
+          Competitor figures include typical card processing of 2.9% + $0.30.
+          Above roughly $10 a tip, Ko-fi's percentage-only model overtakes ours.
+        </p>
+      </Section>
 
-      {/* CTA */}
-      <section className="bg-white border-t border-[#E5E7EB]">
-        <div className="max-w-[560px] mx-auto px-6 py-16 text-center">
-          <h2 className="text-3xl font-bold text-[#111827] tracking-tight mb-2">
-            Start receiving tips today
-          </h2>
-          <p className="text-base text-[#6B7280]">
-            Set up in 2 minutes. Zero fees.
-          </p>
+      {/* ── Steps ───────────────────────────────────────────────── */}
+      <Section className="py-24">
+        <p className="eyebrow text-[var(--muted)] mb-5">Three steps</p>
+        <div className="grid md:grid-cols-3 gap-5">
+          {[
+            {
+              n: "01",
+              t: "Claim your link",
+              d: "Sign in with Google. A USDC wallet is created for you — nothing to install, no seed phrase to write down.",
+            },
+            {
+              n: "02",
+              t: "Share it anywhere",
+              d: "Bio, stream overlay, video description, group chat. Your supporters need no account to send you money.",
+            },
+            {
+              n: "03",
+              t: "Get paid instantly",
+              d: "Tips land in your wallet in under a second. Withdraw whenever you want — it was never held anywhere else.",
+            },
+          ].map((s) => (
+            <div key={s.n} className="glass rounded-2xl p-7">
+              <span className="font-mono-t text-xs text-[var(--violet-lo)]">
+                {s.n}
+              </span>
+              <h3 className="display-md text-white text-[18px] mt-4 mb-2">
+                {s.t}
+              </h3>
+              <p className="text-sm text-[var(--muted)] leading-relaxed">{s.d}</p>
+            </div>
+          ))}
         </div>
-      </section>
+      </Section>
 
-      {/* Footer */}
-      <footer className="border-t border-[#E5E7EB] bg-[#F9FAFB]">
-        <div className="max-w-[1100px] mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tiplyfi"
-              className="w-5 h-5 rounded"
-            />
-            <span className="text-sm font-bold text-[#111827]">Tiplyfi</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <a
-              href="/howitworks"
-              className="text-xs text-[#6B7280] hover:text-[#111827] transition-colors"
-            >
-              How It Works
-            </a>
-            <a
-              href="/signup"
-              className="text-xs text-[#6B7280] hover:text-[#111827] transition-colors"
-            >
-              Sign Up
-            </a>
-            <a
-              href="/login"
-              className="text-xs text-[#6B7280] hover:text-[#111827] transition-colors"
-            >
-              Log In
-            </a>
-            <a
-              href="mailto:tipjar011@gmail.com"
-              className="text-xs text-[#6B7280] hover:text-[#111827] transition-colors flex items-center gap-1"
-            >
-              <Mail size={11} /> Contact
-            </a>
-          </div>
-          <p className="text-xs text-[#9CA3AF]">Built on Arc & Circle</p>
+      {/* ── Close ───────────────────────────────────────────────── */}
+      <Section className="py-28 text-center">
+        <h2 className="display-xl text-white text-[clamp(2.2rem,5vw,3.8rem)] max-w-[760px] mx-auto">
+          Your link is waiting.
+        </h2>
+        <p className="text-[var(--muted)] mt-5 max-w-[420px] mx-auto">
+          Takes under a minute. Free to start, free to keep.
+        </p>
+        <div ref={magnetRef} className="magnetic inline-block mt-9">
+          <button
+            onClick={() => (window.location.href = "/signup")}
+            className="btn-primary text-[15px] font-bold px-9 py-4 rounded-full inline-flex items-center gap-2"
+          >
+            Get your link <ArrowRight size={17} />
+          </button>
+        </div>
+      </Section>
+
+      <footer className="border-t border-[var(--line)] mt-10">
+        <div className="max-w-[1180px] mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
+          <span className="text-sm text-[var(--muted)]">
+            Tiplyfi — a Weself product
+          </span>
+          <span className="font-mono-t text-[11px] text-[rgba(139,138,165,0.6)]">
+            USDC on Arc · Testnet
+          </span>
         </div>
       </footer>
-    </div>
+    </Atmosphere>
   );
 }

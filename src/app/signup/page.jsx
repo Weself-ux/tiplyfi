@@ -17,7 +17,11 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   // Kept separate so a later action can't clear it.
   const [initError, setInitError] = useState("");
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(() => {
+    // Carried from the landing page's claim field.
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("u") || "";
+  });
 
   const sdkRef = useRef(null);
   const authRef = useRef(null);
