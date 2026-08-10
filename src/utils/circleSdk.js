@@ -1,3 +1,18 @@
+// The Circle SDK pulls in dotenv and firebase, which probe process.version
+// and process.versions. The nextPublicProcessEnv plugin supplies process.env
+// in the browser but nothing else, and the node polyfill can't supply it
+// because that shim also lands in the SSR bundle and empties server env vars.
+// So the shim is applied here, client-side only, right where it's needed.
+if (typeof window !== "undefined") {
+  const p = (globalThis.process ??= {});
+  p.env ??= {};
+  p.version ??= "v18.0.0";
+  p.versions ??= { node: "18.0.0" };
+  p.platform ??= "browser";
+  p.browser = true;
+  p.nextTick ??= (fn, ...args) => setTimeout(() => fn(...args), 0);
+}
+
 // Circle User-Controlled Wallets — browser SDK.
 //
 // performLogin REDIRECTS the whole page to Google. Nothing in memory
@@ -32,8 +47,17 @@ const clear = (k) => {
 function config() {
   const appId = import.meta.env.NEXT_PUBLIC_CIRCLE_APP_ID || "";
   const clientId = import.meta.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID || "";
-  if (!appId) throw new Error("Circle App ID is not configured.");
-  if (!clientId) throw new Error("Google client ID is not configured.");
+  // Names which one is missing, and confirms whether env reached the bundle.
+  if (!appId) {
+    throw new Error(
+      `NEXT_PUBLIC_CIRCLE_APP_ID is empty (google id len ${clientId.length})`,
+    );
+  }
+  if (!clientId) {
+    throw new Error(
+      `NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID is empty (app id len ${appId.length})`,
+    );
+  }
 
   return {
     appSettings: { appId },
