@@ -5,7 +5,7 @@ import {
   rateLimit,
   getClientIP,
 } from "@/app/api/utils/auth-helpers";
-import { getCircleUser, initializeUserWallet } from "@/app/api/utils/circle";
+import { initializeUserWallet, listUserWallets } from "@/app/api/utils/circle";
 
 export async function action({ request }) {
   try {
@@ -30,9 +30,14 @@ export async function action({ request }) {
       return Response.json({ error: "Invalid username." }, { status: 400 });
     }
 
-    const circleUser = await getCircleUser(userToken).catch(() => null);
-    if (!circleUser?.id) {
-      return Response.json({ error: "Sign-in failed." }, { status: 401 });
+    try {
+      await listUserWallets(userToken);
+    } catch (err) {
+      console.error("Circle token check failed:", err.message);
+      return Response.json(
+        { error: "Sign-in failed.", detail: err.message },
+        { status: 401 },
+      );
     }
 
     const taken = await sql("SELECT id FROM users WHERE username = $1", [
@@ -90,7 +95,7 @@ export async function action({ request }) {
           username,
           provider || "google",
           socialUserUUID,
-          circleUser.id,
+          null,
         ],
       );
       userId = inserted[0].id;

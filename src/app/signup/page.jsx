@@ -69,7 +69,9 @@ export default function SignupPage() {
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Sign-in failed.");
+        if (!res.ok) {
+          throw new Error(data.detail || data.error || "Sign-in failed.");
+        }
 
         if (data.registered) {
           localStorage.setItem("tipjar_token", data.token);
@@ -153,7 +155,9 @@ export default function SignupPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not create account.");
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || "Could not create account.");
+      }
 
       localStorage.setItem("tipjar_token", data.token);
       setStep("securing");

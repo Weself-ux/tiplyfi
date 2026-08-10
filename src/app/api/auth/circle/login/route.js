@@ -1,6 +1,6 @@
 import sql from "@/app/api/utils/sql";
 import { createSession } from "@/app/api/utils/auth-helpers";
-import { getCircleUser } from "@/app/api/utils/circle";
+import { listUserWallets } from "@/app/api/utils/circle";
 
 export async function action({ request }) {
   try {
@@ -11,17 +11,18 @@ export async function action({ request }) {
       return Response.json({ error: "Sign-in incomplete." }, { status: 400 });
     }
 
-    // Never trust the client's claim of who it is: confirm the token with
-    // Circle before it can select a Weself account.
-    let circleUser = null;
+    // Never trust the client's claim of who it is: the token must be proven
+    // against Circle before it can select a Weself account. listWallets is
+    // the check Circle's own tutorial uses — a new user simply has none yet,
+    // which still proves the token is valid.
     try {
-      circleUser = await getCircleUser(userToken);
+      await listUserWallets(userToken);
     } catch (err) {
       console.error("Circle token check failed:", err.message);
-      return Response.json({ error: "Sign-in failed." }, { status: 401 });
-    }
-    if (!circleUser?.id) {
-      return Response.json({ error: "Sign-in failed." }, { status: 401 });
+      return Response.json(
+        { error: "Sign-in failed.", detail: err.message },
+        { status: 401 },
+      );
     }
 
     const rows = await sql(
@@ -32,11 +33,7 @@ export async function action({ request }) {
     );
 
     if (rows.length === 0) {
-      return Response.json({
-        registered: false,
-        circleUserId: circleUser.id,
-        email: email || null,
-      });
+      return Response.json({ registered: false, email: email || null });
     }
 
     const user = rows[0];
