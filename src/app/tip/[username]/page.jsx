@@ -15,8 +15,6 @@ import Logo from "../../../utils/Logo";
 
 const AMOUNTS = ["1", "5", "10", "25"];
 
-// Networks reachable via Circle CCTP V2 / Gateway. Arc is native; the rest
-// light up as bridge and swap support lands.
 const NETWORKS = [
   { id: "arc", label: "Arc", available: true },
   { id: "base", label: "Base", available: false },
@@ -49,6 +47,7 @@ export default function TipPage({ params }) {
   const [reportReason, setReportReason] = useState("impersonation");
   const [reportDetail, setReportDetail] = useState("");
   const [reportSent, setReportSent] = useState(false);
+  const [bioOpen, setBioOpen] = useState(false);
 
   useEffect(() => {
     flushTipQueue();
@@ -76,7 +75,6 @@ export default function TipPage({ params }) {
   const accent = creator?.accentColor || "#7c3aed";
   const socials = creator?.socialLinks || {};
   const socialEntries = Object.entries(socials).filter(([, v]) => v);
-  // The creator's setting is the only input. Fans don't choose who pays.
   const feePaidByFan = creator?.feeMode === "fan_pays";
 
   const validAmount =
@@ -116,8 +114,6 @@ export default function TipPage({ params }) {
 
     const routed = Boolean(routerAddress);
     const netUsdc = routed ? weiToDisplay(amounts.netWei) : finalAmount;
-    // The Tipped event reports the tip only — the platform tip is separate,
-    // so verification must compare against tipTotal, not the full debit.
     const grossUsdc = routed ? weiToDisplay(amounts.tipTotalWei) : finalAmount;
     const platformTipUsdc = routed ? weiToDisplay(amounts.platformTipWei) : "0";
     const feeUsdc = routed ? weiToDisplay(amounts.feeWei) : "0";
@@ -127,7 +123,6 @@ export default function TipPage({ params }) {
     try {
       setLoading(true);
 
-      // 1. Persist the tip (including the message) BEFORE going on-chain.
       setStatus("Preparing...");
       try {
         const prep = await fetch("/api/tips/prepare", {
@@ -157,7 +152,6 @@ export default function TipPage({ params }) {
         console.warn("[tiplyfi] prepare failed", prepErr);
       }
 
-      // 2. Send on-chain.
       setStatus("Confirm in your wallet...");
       const hash = routed
         ? await tipViaRouter({
@@ -172,7 +166,6 @@ export default function TipPage({ params }) {
         : await sendUsdc(creator.walletAddress, finalAmount, wallet.provider);
       setTxHash(hash);
 
-      // 3. Confirm. On failure this queues to localStorage — never silent.
       await confirmTip({ tipId, clientRef, txHash: hash });
 
       setSuccessMode("wallet");
@@ -230,11 +223,9 @@ export default function TipPage({ params }) {
     }
   }
 
-  // ── Shell ────────────────────────────────────────────────────────────────
-
   function Shell({ children }) {
     return (
-      <div className="relative min-h-screen bg-ink overflow-hidden flex flex-col items-center justify-center px-4 py-14">
+      <div className="relative min-h-screen bg-ink overflow-hidden flex flex-col items-center justify-center px-4 py-10">
         <div
           aria-hidden
           className="pointer-events-none absolute -top-[26%] left-1/2 -translate-x-1/2 w-[85vw] h-[70vw] rounded-full drift"
@@ -323,6 +314,7 @@ export default function TipPage({ params }) {
   }
 
   const initial = creator.username ? creator.username[0].toUpperCase() : "?";
+  const longBio = (creator.bio || "").length > 150;
 
   return (
     <Shell>
@@ -339,40 +331,67 @@ export default function TipPage({ params }) {
       )}
 
       <div
-        className="glass glass-lit rounded-[28px] w-full max-w-[440px] overflow-hidden rise"
+        className="glass glass-lit rounded-[26px] w-full max-w-[880px] overflow-hidden rise grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]"
         style={{ boxShadow: "0 50px 110px -45px rgba(0,0,0,0.95)" }}
       >
-        {/* Creator */}
+        {/* ── Creator ───────────────────────────────────────────── */}
         <div
-          className="px-8 py-9 text-center"
+          className="p-6 md:p-8 flex flex-col justify-center"
           style={{
-            background: `linear-gradient(140deg, ${accent}, ${accent}66 60%, rgba(59,130,246,0.55))`,
+            background: `linear-gradient(155deg, ${accent}E6, ${accent}59 55%, rgba(59,130,246,0.35))`,
           }}
         >
-          <div className="w-[68px] h-[68px] rounded-full bg-white/20 border border-white/35 flex items-center justify-center display-md text-white text-2xl mx-auto mb-4 backdrop-blur-sm">
-            {initial}
+          {/* Compact on mobile so the form sits near the fold */}
+          <div className="flex md:block items-center gap-4 md:text-center">
+            <div className="w-14 h-14 md:w-[72px] md:h-[72px] rounded-full bg-white/20 border border-white/35 flex items-center justify-center display-md text-white text-xl md:text-2xl backdrop-blur-sm md:mx-auto md:mb-4 flex-shrink-0">
+              {initial}
+            </div>
+            <div className="min-w-0">
+              <h1 className="display-md text-white text-lg md:text-[22px] truncate md:whitespace-normal">
+                {creator.displayName || creator.username}
+              </h1>
+              <p className="font-mono-t text-white/65 text-[12px] md:text-[13px] mt-0.5">
+                @{creator.username}
+              </p>
+            </div>
           </div>
-          <h1 className="display-md text-white text-[21px]">
-            {creator.displayName || creator.username}
-          </h1>
-          <p className="font-mono-t text-white/65 text-[13px] mt-1">
-            @{creator.username}
-          </p>
 
           {creator.category && (
-            <span className="inline-block mt-3 text-[11px] font-medium text-white/90 bg-white/15 px-3 py-1 rounded-full">
+            <span className="hidden md:inline-block mt-3 mx-auto text-[11px] font-medium text-white/90 bg-white/15 px-3 py-1 rounded-full">
               {creator.category}
             </span>
           )}
 
           {creator.bio && (
-            <p className="text-white/85 text-sm leading-relaxed mt-4 max-w-[320px] mx-auto">
-              {creator.bio}
-            </p>
+            <div className="mt-4 md:text-center">
+              <p
+                className="text-white/85 text-[13px] md:text-sm leading-relaxed"
+                style={
+                  bioOpen
+                    ? undefined
+                    : {
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }
+                }
+              >
+                {creator.bio}
+              </p>
+              {longBio && (
+                <button
+                  onClick={() => setBioOpen((o) => !o)}
+                  className="text-[11px] text-white/60 hover:text-white transition-colors mt-1.5"
+                >
+                  {bioOpen ? "Show less" : "Read more"}
+                </button>
+              )}
+            </div>
           )}
 
           {socialEntries.length > 0 && (
-            <div className="flex items-center justify-center gap-4 mt-4">
+            <div className="flex flex-wrap md:justify-center gap-x-4 gap-y-1.5 mt-4">
               {socialEntries.map(([key, url]) => (
                 <button
                   key={key}
@@ -384,252 +403,249 @@ export default function TipPage({ params }) {
               ))}
             </div>
           )}
-        </div>
 
-        {/* Mode */}
-        <div className="flex border-b border-[var(--line)]">
-          {[
-            { id: "wallet", label: "Wallet", icon: Wallet },
-            { id: "sponsored", label: "No wallet", icon: Zap },
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setMode(t.id);
-                setStatus("");
-                if (t.id === "sponsored") setWallet(null);
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-medium transition-colors relative ${
-                mode === t.id
-                  ? "text-white"
-                  : "text-[var(--muted)] hover:text-white/80"
-              }`}
-            >
-              <t.icon size={15} />
-              {t.label}
-              {mode === t.id && (
-                <span
-                  className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full"
-                  style={{ background: accent }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="p-7">
-          {underReview && (
-            <div className="mb-6 px-4 py-3 text-sm text-amber-200/90 bg-amber-500/10 border border-amber-500/25 rounded-xl">
-              This page is being reviewed. Tipping is paused until we're done.
-            </div>
-          )}
-
-          {mode === "wallet" && !wallet && (
-            <div className="mb-6">
-              <p className="eyebrow text-[var(--muted)] mb-3">Network</p>
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {NETWORKS.map((n) => (
-                  <button
-                    key={n.id}
-                    disabled={!n.available}
-                    onClick={() => n.available && setNetwork(n.id)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                      network === n.id
-                        ? "text-white"
-                        : n.available
-                          ? "text-[var(--muted)] border-[var(--line)] hover:text-white"
-                          : "text-[rgba(139,138,165,0.4)] border-[var(--line)] cursor-not-allowed"
-                    }`}
-                    style={
-                      network === n.id
-                        ? { borderColor: accent, background: `${accent}22` }
-                        : undefined
-                    }
-                  >
-                    {n.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowPicker(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white rounded-xl border border-[var(--line)] hover:border-[rgba(255,255,255,0.22)] hover:bg-white/[0.03] transition-colors"
-              >
-                <Wallet size={16} />
-                Connect wallet
-              </button>
-            </div>
-          )}
-
-          {mode === "wallet" && wallet && (
-            <div className="mb-6 flex items-center justify-between glass rounded-xl px-4 py-3">
-              <div className="flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--settle)] settle-pulse" />
-                <span className="font-mono-t text-[13px] text-white">
-                  {formatAddress(wallet.address)}
-                </span>
-              </div>
-              <button
-                onClick={() => setWallet(null)}
-                className="text-xs text-[var(--muted)] hover:text-white transition-colors"
-              >
-                Disconnect
-              </button>
-            </div>
-          )}
-
-          {mode === "sponsored" && (
-            <div className="mb-5">
-              <p className="eyebrow text-[var(--muted)] mb-2">
-                Email for a receipt (optional)
-              </p>
-              <input
-                type="email"
-                value={tipperEmail}
-                onChange={(e) => {
-                  setTipperEmail(e.target.value);
-                  setStatus("");
-                }}
-                placeholder="you@example.com"
-                className="w-full px-4 py-3 text-sm text-white bg-white/[0.04] border border-[var(--line)] rounded-xl placeholder:text-[rgba(139,138,165,0.5)] focus:border-[rgba(255,255,255,0.2)] transition-colors"
-              />
-            </div>
-          )}
-
-          {/* Amount */}
-          <p className="eyebrow text-[var(--muted)] mb-3">Amount</p>
-          <div className="grid grid-cols-4 gap-2 mb-2.5">
-            {AMOUNTS.map((a) => {
-              const active = amount === a && !customAmount;
-              return (
-                <button
-                  key={a}
-                  onClick={() => {
-                    setAmount(a);
-                    setCustomAmount("");
-                    setStatus("");
-                  }}
-                  className={`py-3 font-mono-t text-sm rounded-xl border transition-all duration-300 ${
-                    active
-                      ? "text-white"
-                      : "text-[var(--muted)] border-[var(--line)] hover:text-white hover:border-[rgba(255,255,255,0.2)]"
-                  }`}
-                  style={
-                    active
-                      ? { borderColor: accent, background: `${accent}26` }
-                      : undefined
-                  }
-                >
-                  ${a}
-                </button>
-              );
-            })}
-          </div>
-          <input
-            type="number"
-            value={customAmount}
-            onChange={(e) => {
-              setCustomAmount(e.target.value);
-              setAmount("");
-              setStatus("");
-            }}
-            placeholder="Other amount"
-            min="0"
-            step="0.01"
-            className="w-full px-4 py-3 font-mono-t text-sm text-white bg-white/[0.04] border border-[var(--line)] rounded-xl placeholder:text-[rgba(139,138,165,0.5)] focus:border-[rgba(255,255,255,0.2)] transition-colors mb-5"
-          />
-
-          {/* Message */}
-          <p className="eyebrow text-[var(--muted)] mb-3">Message (optional)</p>
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => {
-              setMessage(e.target.value);
-              setStatus("");
-            }}
-            placeholder="Say something nice"
-            maxLength={200}
-            className="w-full px-4 py-3 text-sm text-white bg-white/[0.04] border border-[var(--line)] rounded-xl placeholder:text-[rgba(139,138,165,0.5)] focus:border-[rgba(255,255,255,0.2)] transition-colors mb-5"
-          />
-
-          {/* Breakdown */}
-          {mode === "wallet" && amounts && routerAddress && (
-            <div className="glass rounded-xl p-4 mb-5 text-[13px]">
-              <div className="flex justify-between mb-2">
-                <span className="text-[var(--muted)]">
-                  Tip to @{creator.username}
-                </span>
-                <span className="font-mono-t text-white">
-                  ${weiToDisplay(amounts.netWei)}
-                </span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-[var(--muted)]">Tiplyfi fee</span>
-                <span className="font-mono-t text-white">
-                  ${weiToDisplay(amounts.feeWei)}
-                </span>
-              </div>
-              {supportTiplyfi && (
-                <div className="flex justify-between mb-2">
-                  <span className="text-[var(--muted)]">Support Tiplyfi</span>
-                  <span className="font-mono-t text-white">
-                    ${weiToDisplay(amounts.platformTipWei)}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between pt-3 border-t border-[var(--line)] font-semibold text-white">
-                <span>You pay</span>
-                <span className="font-mono-t">
-                  ${weiToDisplay(amounts.valueWei)}
-                </span>
-              </div>
-
-              <label className="flex items-start gap-2.5 mt-4 pt-4 border-t border-[var(--line)] cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={supportTiplyfi}
-                  onChange={(e) => setSupportTiplyfi(e.target.checked)}
-                  className="mt-0.5 accent-[var(--violet)]"
-                />
-                <span className="text-[var(--muted)] leading-snug text-xs">
-                  Add ${weiToDisplay(amounts.platformTipWei)} to support Tiplyfi
-                </span>
-              </label>
-            </div>
-          )}
-
-          {status && (
-            <div className="mb-5 px-4 py-3 text-sm text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl break-words">
-              {status}
-            </div>
-          )}
-
-          <button
-            onClick={mode === "wallet" ? handleWalletTip : handleSponsoredTip}
-            disabled={loading || underReview || (mode === "wallet" && !wallet)}
-            className="btn-primary w-full py-3.5 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 size={16} className="animate-spin" />
-                {status || "Sending..."}
-              </span>
-            ) : (
-              `Send ${validAmount ? `$${finalAmount}` : ""} USDC`
-            )}
-          </button>
-
-          <div className="flex items-center justify-center gap-2 mt-5">
+          <div className="hidden md:flex items-center justify-center gap-2 mt-6 pt-5 border-t border-white/15">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--settle)] settle-pulse" />
-            <span className="font-mono-t text-[11px] text-settle">
+            <span className="font-mono-t text-[10px] text-white/75">
               settles in under a second
             </span>
           </div>
         </div>
+
+        {/* ── Tip ───────────────────────────────────────────────── */}
+        <div className="flex flex-col border-t md:border-t-0 md:border-l border-[var(--line)]">
+          <div className="flex border-b border-[var(--line)]">
+            {[
+              { id: "wallet", label: "Wallet", icon: Wallet },
+              { id: "sponsored", label: "Card & bank", icon: Zap },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setMode(t.id);
+                  setStatus("");
+                  if (t.id === "sponsored") setWallet(null);
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative ${
+                  mode === t.id
+                    ? "text-white"
+                    : "text-[var(--muted)] hover:text-white/80"
+                }`}
+              >
+                <t.icon size={15} />
+                {t.label}
+                {mode === t.id && (
+                  <span
+                    className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full"
+                    style={{ background: accent }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-6 flex-1 flex flex-col">
+            {underReview && (
+              <div className="mb-4 px-3 py-2.5 text-[13px] text-amber-200/90 bg-amber-500/10 border border-amber-500/25 rounded-lg">
+                This page is being reviewed. Tipping is paused.
+              </div>
+            )}
+
+            {mode === "wallet" && !wallet && (
+              <div className="mb-4">
+                <p className="eyebrow text-[var(--muted)] mb-2">Network</p>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {NETWORKS.map((n) => (
+                    <button
+                      key={n.id}
+                      disabled={!n.available}
+                      onClick={() => n.available && setNetwork(n.id)}
+                      className={`px-2.5 py-1 text-[11px] font-medium rounded-md border transition-colors ${
+                        network === n.id
+                          ? "text-white"
+                          : n.available
+                            ? "text-[var(--muted)] border-[var(--line)] hover:text-white"
+                            : "text-[rgba(139,138,165,0.4)] border-[var(--line)] cursor-not-allowed"
+                      }`}
+                      style={
+                        network === n.id
+                          ? { borderColor: accent, background: `${accent}22` }
+                          : undefined
+                      }
+                    >
+                      {n.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setShowPicker(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white rounded-lg border border-[var(--line)] hover:border-[rgba(255,255,255,0.22)] hover:bg-white/[0.03] transition-colors"
+                >
+                  <Wallet size={15} />
+                  Connect wallet
+                </button>
+              </div>
+            )}
+
+            {mode === "wallet" && wallet && (
+              <div className="mb-4 flex items-center justify-between glass rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--settle)] settle-pulse" />
+                  <span className="font-mono-t text-[12px] text-white">
+                    {formatAddress(wallet.address)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setWallet(null)}
+                  className="text-[11px] text-[var(--muted)] hover:text-white transition-colors"
+                >
+                  Disconnect
+                </button>
+              </div>
+            )}
+
+            {mode === "sponsored" && (
+              <div className="mb-4">
+                <p className="eyebrow text-[var(--muted)] mb-1.5">
+                  Email for a receipt
+                </p>
+                <input
+                  type="email"
+                  value={tipperEmail}
+                  onChange={(e) => {
+                    setTipperEmail(e.target.value);
+                    setStatus("");
+                  }}
+                  placeholder="you@example.com"
+                  className="w-full px-3 py-2.5 text-sm text-white bg-white/[0.04] border border-[var(--line)] rounded-lg placeholder:text-[rgba(139,138,165,0.5)] focus:border-[rgba(255,255,255,0.2)] transition-colors"
+                />
+              </div>
+            )}
+
+            <p className="eyebrow text-[var(--muted)] mb-2">Amount</p>
+            <div className="grid grid-cols-4 gap-1.5 mb-1.5">
+              {AMOUNTS.map((a) => {
+                const active = amount === a && !customAmount;
+                return (
+                  <button
+                    key={a}
+                    onClick={() => {
+                      setAmount(a);
+                      setCustomAmount("");
+                      setStatus("");
+                    }}
+                    className={`py-2.5 font-mono-t text-sm rounded-lg border transition-all duration-300 ${
+                      active
+                        ? "text-white"
+                        : "text-[var(--muted)] border-[var(--line)] hover:text-white hover:border-[rgba(255,255,255,0.2)]"
+                    }`}
+                    style={
+                      active
+                        ? { borderColor: accent, background: `${accent}26` }
+                        : undefined
+                    }
+                  >
+                    ${a}
+                  </button>
+                );
+              })}
+            </div>
+            <input
+              type="number"
+              value={customAmount}
+              onChange={(e) => {
+                setCustomAmount(e.target.value);
+                setAmount("");
+                setStatus("");
+              }}
+              placeholder="Other amount"
+              min="0"
+              step="0.01"
+              className="w-full px-3 py-2.5 font-mono-t text-sm text-white bg-white/[0.04] border border-[var(--line)] rounded-lg placeholder:text-[rgba(139,138,165,0.5)] focus:border-[rgba(255,255,255,0.2)] transition-colors mb-4"
+            />
+
+            <p className="eyebrow text-[var(--muted)] mb-2">Message</p>
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                setStatus("");
+              }}
+              placeholder="Say something nice"
+              maxLength={200}
+              className="w-full px-3 py-2.5 text-sm text-white bg-white/[0.04] border border-[var(--line)] rounded-lg placeholder:text-[rgba(139,138,165,0.5)] focus:border-[rgba(255,255,255,0.2)] transition-colors mb-4"
+            />
+
+            {mode === "wallet" && amounts && routerAddress && (
+              <div className="glass rounded-lg p-3 mb-4 text-[12px]">
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-[var(--muted)]">
+                    Tip to @{creator.username}
+                  </span>
+                  <span className="font-mono-t text-white">
+                    ${weiToDisplay(amounts.netWei)}
+                  </span>
+                </div>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-[var(--muted)]">Tiplyfi fee</span>
+                  <span className="font-mono-t text-white">
+                    ${weiToDisplay(amounts.feeWei)}
+                  </span>
+                </div>
+                {supportTiplyfi && (
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-[var(--muted)]">Support Tiplyfi</span>
+                    <span className="font-mono-t text-white">
+                      ${weiToDisplay(amounts.platformTipWei)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-2 border-t border-[var(--line)] font-semibold text-white">
+                  <span>You pay</span>
+                  <span className="font-mono-t">
+                    ${weiToDisplay(amounts.valueWei)}
+                  </span>
+                </div>
+                <label className="flex items-start gap-2 mt-2.5 pt-2.5 border-t border-[var(--line)] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={supportTiplyfi}
+                    onChange={(e) => setSupportTiplyfi(e.target.checked)}
+                    className="mt-0.5 accent-[var(--violet)]"
+                  />
+                  <span className="text-[var(--muted)] leading-snug text-[11px]">
+                    Add ${weiToDisplay(amounts.platformTipWei)} to support Tiplyfi
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {status && (
+              <div className="mb-4 px-3 py-2.5 text-[13px] text-red-300 bg-red-500/10 border border-red-500/25 rounded-lg break-words">
+                {status}
+              </div>
+            )}
+
+            <button
+              onClick={mode === "wallet" ? handleWalletTip : handleSponsoredTip}
+              disabled={loading || underReview || (mode === "wallet" && !wallet)}
+              className="btn-primary w-full py-3 rounded-lg text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed mt-auto"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 size={15} className="animate-spin" />
+                  {status || "Sending..."}
+                </span>
+              ) : (
+                `Send ${validAmount ? `$${finalAmount}` : ""} USDC`
+              )}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-8 flex flex-col items-center gap-4">
+      <div className="mt-6 flex flex-col items-center gap-3">
         <button
           onClick={() => (window.location.href = "/signup")}
           className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-white transition-colors"
@@ -645,7 +661,6 @@ export default function TipPage({ params }) {
         </button>
       </div>
 
-      {/* Report */}
       {reportOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4"
@@ -728,7 +743,6 @@ export default function TipPage({ params }) {
         </div>
       )}
 
-      {/* Success */}
       {showSuccess && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4"
