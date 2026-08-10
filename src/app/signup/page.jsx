@@ -97,7 +97,9 @@ export default function SignupPage() {
     try {
       await startGoogleLogin(sdkRef.current); // navigates away
     } catch (e) {
-      setError(e.message);
+      // Temporary: the stack names the failing frame. Trim once sign-in works.
+      console.error("[tiplyfi] google login failed", e);
+      setError(`${e.message} — ${String(e.stack || "").split("\n")[1] || ""}`);
       setBusy(false);
     }
   }

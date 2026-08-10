@@ -73,6 +73,7 @@ export async function ensureDeviceId(sdk) {
 /// redirect, then hands the page to Google. Does not return.
 export async function startGoogleLogin(sdk) {
   const deviceId = await ensureDeviceId(sdk);
+  if (!deviceId) throw new Error("No device id returned by the SDK.");
 
   const res = await fetch("/api/auth/circle/device", {
     method: "POST",
@@ -84,16 +85,23 @@ export async function startGoogleLogin(sdk) {
     throw new Error(data.detail || data.error || "Could not start sign-in.");
   }
 
+  if (!data.deviceToken || !data.deviceEncryptionKey) {
+    throw new Error("Circle returned an incomplete device session.");
+  }
   write(STORE.deviceToken, data.deviceToken);
   write(STORE.deviceEncryptionKey, data.deviceEncryptionKey);
   write(STORE.pending, "1");
 
   sdk.updateConfigs(config());
 
-  const { SocialLoginProvider } = await import(
-    "@circle-fin/w3s-pw-web-sdk/dist/src/types"
-  );
-  sdk.performLogin(SocialLoginProvider.GOOGLE);
+  const types = await import("@circle-fin/w3s-pw-web-sdk/dist/src/types");
+  const provider = types?.SocialLoginProvider?.GOOGLE;
+  if (!provider) {
+    throw new Error(
+      `SocialLoginProvider missing. exports: ${Object.keys(types || {}).join(",")}`,
+    );
+  }
+  sdk.performLogin(provider);
 }
 
 export const isLoginPending = () => read(STORE.pending) === "1";
