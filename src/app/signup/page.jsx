@@ -15,6 +15,8 @@ export default function SignupPage() {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Kept separate so a later action can't clear it.
+  const [initError, setInitError] = useState("");
   const [username, setUsername] = useState("");
 
   const sdkRef = useRef(null);
@@ -81,8 +83,11 @@ export default function SignupPage() {
         if (isLoginPending()) setBusy(true);
         setReady(true);
       } catch (e) {
-        setError(e.message);
-        setReady(true);
+        console.error("[tiplyfi] SDK init failed", e);
+        setInitError(
+          `${e.message} — ${String(e.stack || "").split("\n")[1] || ""}`,
+        );
+        // Deliberately not setting ready: a null SDK must not be clickable.
       }
     })();
 
@@ -171,9 +176,9 @@ export default function SignupPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#F5F3FF] via-white to-[#EFF6FF] font-inter flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm w-full max-w-[400px] p-8">
 
-        {error && (
-          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">
-            {error}
+        {(initError || error) && (
+          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 break-words">
+            {initError || error}
           </p>
         )}
 
