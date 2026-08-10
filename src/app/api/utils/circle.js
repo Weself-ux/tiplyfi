@@ -20,17 +20,6 @@ function uuid() {
 
 async function circleFetch(path, { method = "GET", userToken, body } = {}) {
   const key = process.env.CIRCLE_API_KEY || "";
-  // Temporary diagnostic. Reports the shape of the key the server actually
-  // receives without exposing it. Remove once sign-in works.
-  if (key.split(":").length !== 3) {
-    throw new Error(
-      `API key shape wrong — length ${key.length}, ` +
-        `parts ${key.split(":").length}, ` +
-        `starts "${key.slice(0, 14)}", ` +
-        `ends "${key.slice(-4)}"`,
-    );
-  }
-
   const headers = {
     Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",

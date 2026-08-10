@@ -76,15 +76,6 @@ export default function SignupPage() {
           throw new Error(data.detail || data.error || "Sign-in failed.");
         }
 
-        // Diagnostic: Circle's own record of this user's PIN state.
-        fetch("/api/auth/circle/status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userToken: authRef.current.userToken }),
-        })
-          .then((r) => r.json())
-          .then((d) => console.log("[tiplyfi] circle user status", d))
-          .catch(() => {});
 
         if (data.registered) {
           localStorage.setItem("tipjar_token", data.token);
@@ -138,8 +129,7 @@ export default function SignupPage() {
       await startGoogleLogin(sdkRef.current); // navigates away
     } catch (e) {
       // Temporary: the stack names the failing frame. Trim once sign-in works.
-      console.error("[tiplyfi] google login failed", e);
-      setError(`${e.message} — ${String(e.stack || "").split("\n")[1] || ""}`);
+      setError(e.message);
       setBusy(false);
     }
   }
@@ -179,18 +169,14 @@ export default function SignupPage() {
 
       // Circle's hosted screens collect the PIN and security questions.
       // The wallet does not exist until this challenge completes.
-      console.log("[tiplyfi] register result", {
-        challengeId: data.challengeId,
-        alreadyInitialised: data.alreadyInitialised,
-      });
+    
 
       if (data.challengeId) {
-        const challengeResult = await executeChallenge(sdkRef.current, {
+        await executeChallenge(sdkRef.current, {
           challengeId: data.challengeId,
           userToken: auth.userToken,
           encryptionKey: auth.encryptionKey,
         });
-        console.log("[tiplyfi] challenge result", challengeResult);
         // Circle needs a moment to index the new wallet.
         await new Promise((r) => setTimeout(r, 2000));
       }

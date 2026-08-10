@@ -94,7 +94,7 @@ export async function action({ request }) {
   } catch (err) {
     console.error("Withdraw error:", err);
     return Response.json(
-      { error: "Could not start the withdrawal.", detail: err.message },
+      { error: "Could not start the withdrawal."},
       { status: 500 },
     );
   }

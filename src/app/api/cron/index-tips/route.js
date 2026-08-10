@@ -193,7 +193,7 @@ export async function loader({ request }) {
     console.error("[cron/index-tips]", err);
     // Secret-gated endpoint, so returning the message is safe and saves a round trip.
     return Response.json(
-      { error: "Indexer failed", detail: err.message },
+      { error: "Indexer failed"},
       { status: 500 },
     );
   }

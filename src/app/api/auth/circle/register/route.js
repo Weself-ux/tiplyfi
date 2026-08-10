@@ -44,7 +44,7 @@ export async function action({ request }) {
     } catch (err) {
       console.error("Circle token check failed:", err.message);
       return Response.json(
-        { error: "Sign-in failed.", detail: err.message },
+        { error: "Sign-in failed."},
         { status: 401 },
       );
     }

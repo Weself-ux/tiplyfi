@@ -27,7 +27,7 @@ export async function action({ request }) {
     // Temporary: surfaces the Circle error so we can diagnose without
     // Vercel log access. Remove once sign-in is working.
     return Response.json(
-      { error: "Could not start sign-in.", detail: err.message },
+      { error: "Could not start sign-in."},
       { status: 500 },
     );
   }

@@ -106,7 +106,6 @@ export default function TipPage({ params }) {
         body: JSON.stringify({
           username,
           reason: reportReason,
-          detail: reportDetail || null,
         }),
       });
     } catch {}

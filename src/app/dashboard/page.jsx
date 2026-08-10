@@ -832,10 +832,10 @@ export default function Dashboard() {
 
             <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
-                Send USDC
+           
               </h3>
               <p className="text-sm text-[#6B7280] mb-4">
-                Send USDC directly to any address on Arc Testnet
+                
               </p>
               
               <SendUSDCForm walletAddress={user.walletAddress} username={user.username} />
