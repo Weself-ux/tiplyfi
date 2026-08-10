@@ -164,12 +164,18 @@ export default function SignupPage() {
 
       // Circle's hosted screens collect the PIN and security questions.
       // The wallet does not exist until this challenge completes.
+      console.log("[tiplyfi] register result", {
+        challengeId: data.challengeId,
+        alreadyInitialised: data.alreadyInitialised,
+      });
+
       if (data.challengeId) {
-        await executeChallenge(sdkRef.current, {
+        const challengeResult = await executeChallenge(sdkRef.current, {
           challengeId: data.challengeId,
           userToken: auth.userToken,
           encryptionKey: auth.encryptionKey,
         });
+        console.log("[tiplyfi] challenge result", challengeResult);
         // Circle needs a moment to index the new wallet.
         await new Promise((r) => setTimeout(r, 2000));
       }
@@ -188,7 +194,10 @@ export default function SignupPage() {
       }
 
       clearDeviceSession();
-      window.location.href = "/dashboard";
+      // Small settle before a full page navigation, so the session write is
+      // visible to the dashboard's first render.
+      await new Promise((r) => setTimeout(r, 300));
+      window.location.replace("/dashboard");
     } catch (e) {
       setError(e.message);
       setStep("username");

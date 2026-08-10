@@ -74,7 +74,7 @@ export async function action({ request }) {
     const existing = await sql(
       `SELECT id, username FROM users
         WHERE auth_provider = $1 AND provider_subject_id = $2`,
-      [provider || "google", socialUserUUID],
+      [String(provider || "google").toLowerCase(), socialUserUUID],
     );
 
     let userId;
@@ -93,7 +93,7 @@ export async function action({ request }) {
           name || username,
           email || null,
           username,
-          provider || "google",
+          String(provider || "google").toLowerCase(),
           socialUserUUID,
           null,
         ],
@@ -111,18 +111,28 @@ export async function action({ request }) {
     // Creates the PIN + wallet challenge. The wallet exists only once the
     // user completes it in the browser.
     let challengeId = null;
+    let alreadyInitialised = false;
     try {
       challengeId = await initializeUserWallet(userToken);
     } catch (err) {
       if (err.circleCode === 155106) {
-        challengeId = null; // already initialised; wallets fetched at complete
+        // Already initialised: the PIN was set in an earlier session, so
+        // there is no challenge to run and the wallet already exists.
+        alreadyInitialised = true;
+        challengeId = null;
       } else {
         throw err;
       }
     }
 
     const token = await createSession(userId);
-    return Response.json({ success: true, token, challengeId, userId });
+    return Response.json({
+      success: true,
+      token,
+      challengeId,
+      userId,
+      alreadyInitialised,
+    });
   } catch (err) {
     console.error("Circle register error:", err);
     return Response.json({ error: "Could not create your account." }, { status: 500 });
