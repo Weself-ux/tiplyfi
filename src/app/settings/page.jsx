@@ -200,7 +200,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="page-light flex items-center justify-center">
         <Loader2 size={24} className="text-[#7c3aed] animate-spin" />
       </div>
     );
@@ -220,7 +220,7 @@ export default function SettingsPage() {
 
   return (
     <div className="page-light">
-      <nav className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB]">
+      <nav className="nav-light sticky top-0 z-50">
         <div className="max-w-[720px] mx-auto px-6 flex items-center gap-3 h-14">
         <a            
             href="/dashboard"
@@ -228,9 +228,7 @@ export default function SettingsPage() {
           >
             <ArrowLeft size={18} />
           </a>
-          <span className="text-lg font-semibold text-[#111827] tracking-tight">
-            Settings
-          </span>
+          <span className="display-md text-[17px] text-[#111827]">Settings</span>
           {saved && (
             <span className="ml-auto flex items-center gap-1 text-xs text-green-600 font-medium">
               <Check size={13} /> Saved

@@ -301,7 +301,7 @@ export default function Dashboard() {
 
   if (sessionLoading || !user) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="page-light flex items-center justify-center">
         <Loader2 size={24} className="text-[#7c3aed] animate-spin" />
       </div>
     );

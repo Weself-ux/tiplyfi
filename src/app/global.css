@@ -132,11 +132,36 @@
   /* Not a flat grey. Two faint washes keep the light pages in the same
      family as the dark ones without hurting readability. */
   .page-light {
+    position: relative;
     min-height: 100vh;
     background:
-      radial-gradient(ellipse 80% 50% at 12% -10%, rgba(124, 58, 237, 0.07), transparent 62%),
-      radial-gradient(ellipse 60% 45% at 94% -2%, rgba(59, 130, 246, 0.06), transparent 62%),
+      radial-gradient(ellipse 90% 55% at 8% -12%, rgba(124, 58, 237, 0.11), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 96% -4%, rgba(59, 130, 246, 0.09), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 108%, rgba(45, 212, 167, 0.05), transparent 62%),
       var(--paper);
+  }
+  /* The same grid the dark pages use, at light-surface weight. Keeps the two
+     halves of the product in one family instead of two. */
+  .page-light::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(17, 24, 39, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(17, 24, 39, 0.028) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 10%, transparent 72%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 10%, transparent 72%);
+  }
+  .page-light > * { position: relative; }
+
+  /* Shared glass nav for the light surfaces. */
+  .nav-light {
+    background: rgba(250, 250, 252, 0.78);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    border-bottom: 1px solid rgba(17, 24, 39, 0.07);
   }
 
   .card {

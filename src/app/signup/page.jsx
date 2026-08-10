@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import Atmosphere from "../../utils/Atmosphere";
+import Logo from "../../utils/Logo";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import {
   initSdk,
@@ -210,120 +212,138 @@ export default function SignupPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5F3FF] via-white to-[#EFF6FF] font-inter flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm w-full max-w-[400px] p-8">
+ return (
+    <Atmosphere>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="mb-8 rise"
+          style={{ "--d": "0.05s" }}
+        >
+          <Logo size={30} showWord className="text-white" />
+        </button>
 
-        {(initError || error) && (
-          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 break-words">
-            {initError || error}
-          </p>
-        )}
-
-        {step === "start" && (
-          <>
-            <h1 className="text-2xl font-bold text-[#111827] mb-1">
-              Start accepting tips
-            </h1>
-            <p className="text-sm text-[#6B7280] mb-7">
-              Create your page in under a minute. No crypto wallet needed.
+        <div
+          className="glass glass-lit rounded-[26px] w-full max-w-[400px] p-8 rise"
+          style={{ "--d": "0.15s", boxShadow: "0 50px 110px -45px rgba(0,0,0,0.95)" }}
+        >
+          {(initError || error) && (
+            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 mb-5 break-words">
+              {initError || error}
             </p>
+          )}
 
-            <button
-              onClick={handleGoogle}
-              disabled={!ready || busy}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-[#111827] border border-[#E5E7EB] rounded-xl hover:border-[#C4B5FD] hover:bg-[#FAFAFA] disabled:opacity-50 transition-colors"
-            >
-              {busy || !ready ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <span className="text-base font-bold">G</span>
-              )}
-              Continue with Google
-            </button>
+          {step === "start" && (
+            <>
+              <h1 className="display-lg text-white text-[26px] mb-2">
+                Start accepting tips
+              </h1>
+              <p className="text-sm text-[var(--muted)] mb-7">
+                Set up in two minutes. No crypto wallet needed.
+              </p>
 
-            <div className="mt-6 space-y-2 text-xs text-[#6B7280]">
-              <p className="flex items-start gap-2">
-                <Check size={13} className="text-[#7c3aed] mt-0.5 flex-shrink-0" />
-                A USDC wallet is created for you automatically
+              <button
+                onClick={handleGoogle}
+                disabled={!ready || busy}
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 text-sm font-semibold text-white rounded-xl border border-[var(--line)] hover:border-[rgba(255,255,255,0.24)] hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
+              >
+                {busy || !ready ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <span className="text-base font-bold">G</span>
+                )}
+                Continue with Google
+              </button>
+
+              <div className="mt-7 space-y-2.5">
+                {[
+                  "A USDC wallet is created for you automatically",
+                  "Only you can move your money — not even we can",
+                  "Tips arrive in under a second",
+                ].map((t) => (
+                  <p key={t} className="flex items-start gap-2.5 text-xs text-[var(--muted)]">
+                    <Check size={13} className="text-settle mt-0.5 flex-shrink-0" />
+                    {t}
+                  </p>
+                ))}
+              </div>
+            </>
+          )}
+
+          {step === "username" && (
+            <>
+              <h1 className="display-lg text-white text-[26px] mb-2">
+                Pick your username
+              </h1>
+              <p className="text-sm text-[var(--muted)] mb-6">
+                This is your tip link. Supporters will see it.
               </p>
-              <p className="flex items-start gap-2">
-                <Check size={13} className="text-[#7c3aed] mt-0.5 flex-shrink-0" />
-                Only you can move your money — not even we can
+
+              <div className="flex items-center rounded-xl border border-[var(--line)] bg-white/[0.04] overflow-hidden focus-within:border-[rgba(167,139,250,0.5)] transition-colors mb-2">
+                <span className="pl-4 font-mono-t text-sm text-[var(--muted)] select-none">
+                  tiplyfi.app/
+                </span>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""));
+                    setError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && !busy && handleCreate()}
+                  placeholder="yourname"
+                  maxLength={30}
+                  autoFocus
+                  className="flex-1 px-1 py-3.5 bg-transparent font-mono-t text-sm text-white placeholder:text-[rgba(139,138,165,0.5)] min-w-0"
+                />
+              </div>
+              <p className="text-xs text-[rgba(139,138,165,0.7)] mb-6">
+                Letters, numbers and underscores. This can't be changed later.
               </p>
-              <p className="flex items-start gap-2">
-                <Check size={13} className="text-[#7c3aed] mt-0.5 flex-shrink-0" />
-                Tips arrive in under a second
+
+              <button
+                onClick={handleCreate}
+                disabled={busy || username.length < 3}
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold disabled:opacity-40"
+              >
+                {busy ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <>
+                    Continue <ArrowRight size={15} />
+                  </>
+                )}
+              </button>
+            </>
+          )}
+
+          {step === "securing" && (
+            <div className="text-center py-4">
+              <div className="relative w-16 h-16 mx-auto mb-6">
+                <span
+                  className="absolute inset-0 rounded-full settle-pulse"
+                  style={{ background: "rgba(45,212,167,0.16)" }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 size={24} className="text-settle animate-spin" />
+                </div>
+              </div>
+              <h1 className="display-md text-white text-xl mb-2">
+                Creating your wallet
+              </h1>
+              <p className="text-xs text-amber-200/85 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 text-left mt-5">
+                Keep access to this Google account. It's how you get back into
+                your wallet, and nobody — not Tiplyfi, not Circle — can restore
+                it for you.
               </p>
             </div>
-          </>
-        )}
+          )}
+        </div>
 
-        {step === "username" && (
-          <>
-            <h1 className="text-2xl font-bold text-[#111827] mb-1">
-              Pick your username
-            </h1>
-            <p className="text-sm text-[#6B7280] mb-6">
-              This is your tip link. Supporters will see it.
-            </p>
-
-            <div className="flex items-center border border-[#E5E7EB] rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#7c3aed] mb-2">
-              <span className="pl-3 text-sm text-[#9CA3AF] select-none">
-                tiplyfi.app/
-              </span>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""));
-                  setError("");
-                }}
-                onKeyDown={(e) => e.key === "Enter" && !busy && handleCreate()}
-                placeholder="yourname"
-                maxLength={30}
-                autoFocus
-                className="flex-1 px-1 py-3 text-sm text-[#111827] outline-none"
-              />
-            </div>
-            <p className="text-xs text-[#9CA3AF] mb-6">
-              Letters, numbers and underscores. This can't be changed later.
-            </p>
-
-            <button
-              onClick={handleCreate}
-              disabled={busy || username.length < 3}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-white bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {busy ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <>
-                  Continue <ArrowRight size={15} />
-                </>
-              )}
-            </button>
-          </>
-        )}
-
-        {step === "securing" && (
-          <div className="text-center py-6">
-            <Loader2 size={28} className="text-[#7c3aed] animate-spin mx-auto mb-5" />
-            <h1 className="text-xl font-bold text-[#111827] mb-2">
-              Securing your wallet
-            </h1>
-            <p className="text-sm text-[#6B7280] mb-4">
-              Creating your wallet.
-            </p>
-            <p className="text-xs text-[#92400E] bg-[#FFFBEB] border border-[#FDE68A] rounded-xl px-4 py-3 text-left">
-              Keep access to this Google account. It's how you get back into
-              your wallet, and nobody — not Tiplyfi, not Circle — can restore it
-              for you.
-            </p>
-          </div>
-        )}
-
+        <p className="text-xs text-[rgba(139,138,165,0.6)] mt-6">
+          Wallets powered by Circle
+        </p>
       </div>
-    </div>
+    </Atmosphere>
   );
 }
