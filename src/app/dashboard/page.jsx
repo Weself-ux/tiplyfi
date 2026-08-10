@@ -390,6 +390,7 @@ export default function Dashboard() {
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "history", label: "History", icon: History },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "engagement", label: "Engagement", icon: Trophy },
     { id: "wallet", label: "Wallet", icon: Wallet },
   ];
 
@@ -797,6 +798,70 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === "engagement" && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+              <h3 className="text-base font-semibold text-[#111827] mb-1">
+                Turn one-off tips into regulars
+              </h3>
+              <p className="text-sm text-[#6B7280]">
+                Tools that give supporters a reason to come back. Rolling out
+                over the next few releases.
+              </p>
+            </div>
+
+            {[
+              {
+                title: "Goals and milestones",
+                rows: [
+                  "Monthly goal bar on your page",
+                  "Milestones supporters unlock together",
+                ],
+              },
+              {
+                title: "Recognition",
+                rows: [
+                  "Top supporter badge",
+                  "Supporter badges, held on-chain",
+                  "Weekly and monthly leaderboards",
+                ],
+              },
+              {
+                title: "Sell to your supporters",
+                rows: ["Tip-gated downloads", "Supporter-only posts"],
+              },
+              {
+                title: "Reach",
+                rows: [
+                  "Live tip feed on your page",
+                  "Share a tip to social",
+                  "Reply to supporters",
+                ],
+              },
+            ].map((g) => (
+              <div
+                key={g.title}
+                className="bg-white rounded-xl border border-[#E5E7EB] p-6"
+              >
+                <h3 className="text-base font-semibold text-[#111827] mb-3">
+                  {g.title}
+                </h3>
+                {g.rows.map((r) => (
+                  <div
+                    key={r}
+                    className="flex items-center justify-between py-3 border-b border-[#F3F4F6] last:border-0"
+                  >
+                    <span className="text-sm text-[#9CA3AF]">{r}</span>
+                    <span className="text-[10px] font-semibold text-[#6B7280] bg-[#F3F4F6] px-2 py-1 rounded uppercase tracking-wider">
+                      Soon
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         )}
 

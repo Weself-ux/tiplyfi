@@ -169,6 +169,9 @@ export default function LandingPage() {
             <p className="text-xs text-[rgba(139,138,165,0.75)] mt-3 pl-1">
               Free. Sign in with Google and your wallet is created for you.
             </p>
+            <p className="text-xs text-[rgba(139,138,165,0.55)] mt-2 pl-1">
+              Running on Arc Testnet — tips use test USDC with no real value.
+            </p>
           </div>
         </div>
 
@@ -369,6 +372,59 @@ export default function LandingPage() {
         </div>
       </Section>
 
+      {/* ── Questions ───────────────────────────────────────────── */}
+      <Section className="py-24">
+        <p className="eyebrow text-[var(--muted)] mb-5">Questions</p>
+        <div className="grid lg:grid-cols-[38%_62%] gap-14">
+          <h2 className="display-lg text-white text-[clamp(1.9rem,3.6vw,2.6rem)]">
+            The ones people
+            <br />
+            actually ask.
+          </h2>
+
+          <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {[
+              {
+                q: "Do my supporters need a crypto wallet?",
+                a: "Not for long. Card and bank payments are coming, and supporters never create a Tiplyfi account either way — they open your link, pick an amount, and send.",
+              },
+              {
+                q: "Do I need to know anything about crypto?",
+                a: "No. Sign in with Google and a wallet is created for you. There's no seed phrase, no extension to install, and no network to configure.",
+              },
+              {
+                q: "What is USDC?",
+                a: "A dollar-backed stablecoin. A $5 tip is worth $5 — it doesn't move up or down. On Arc it's also what pays for the transaction, so there's no second token to hold.",
+              },
+              {
+                q: "Where does Tiplyfi work?",
+                a: "Anywhere. Card platforms need a payout provider that supports your country, which locks out most of Africa, South Asia and Southeast Asia. Tiplyfi needs a Google account.",
+              },
+              {
+                q: "Can Tiplyfi freeze or take my money?",
+                a: "No. The contract has no function that would let us, and it can't be upgraded to add one. If we ever remove your page for breaking our rules, your money stays exactly where it is — in your wallet.",
+              },
+              {
+                q: "Is this real money right now?",
+                a: "Not yet. Tiplyfi runs on Arc Testnet, where USDC is a test token with no monetary value. Mainnet comes after the contract is audited.",
+              },
+            ].map((f) => (
+              <details key={f.q} className="group py-5">
+                <summary className="flex items-start justify-between gap-6 cursor-pointer list-none text-white text-[15px] font-medium marker:hidden">
+                  {f.q}
+                  <span className="text-[var(--violet-lo)] text-xl leading-none flex-shrink-0 transition-transform duration-300 group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="text-sm text-[var(--muted)] leading-relaxed mt-3 pr-10">
+                  {f.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </Section>
+
       {/* ── Close ───────────────────────────────────────────────── */}
       <Section className="py-28 text-center">
         <h2 className="display-xl text-white text-[clamp(2.2rem,5vw,3.8rem)] max-w-[760px] mx-auto">
@@ -392,9 +448,25 @@ export default function LandingPage() {
           <span className="text-sm text-[var(--muted)]">
             Tiplyfi — a Weself product
           </span>
-          <span className="font-mono-t text-[11px] text-[rgba(139,138,165,0.6)]">
-            USDC on Arc · Testnet
-          </span>
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => (window.location.href = "/howitworks")}
+              className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+            >
+              How it works
+            </button>
+            <button
+              onClick={() =>
+                window.open("mailto:tipjar011@gmail.com", "_self")
+              }
+              className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+            >
+              Contact
+            </button>
+            <span className="font-mono-t text-[11px] text-[rgba(139,138,165,0.6)]">
+              USDC on Arc · Testnet
+            </span>
+          </div>
         </div>
       </footer>
     </Atmosphere>

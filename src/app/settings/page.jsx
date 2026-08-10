@@ -298,22 +298,6 @@ export default function SettingsPage() {
           <SoonRow label="Linked accounts" />
         </Section>
 
-        <Section title="Products">
-          <SoonRow label="Tip-gated downloads" />
-          <SoonRow label="Supporter-only posts" />
-        </Section>
-
-        <Section title="Engagement">
-          <SoonRow label="Monthly goal" />
-          <SoonRow label="Tip milestones" />
-          <SoonRow label="Top supporter badge" />
-          <SoonRow label="Live tip feed on your page" />
-          <SoonRow label="Leaderboards" />
-          <SoonRow label="Supporter badges" />
-          <SoonRow label="Reply to supporters" />
-          <SoonRow label="Share a tip to social" />
-        </Section>
-
         <Section title="Automation">
           <SoonRow label="Auto-save a share of every tip" />
           <SoonRow label="Auto-withdraw above a threshold" />
