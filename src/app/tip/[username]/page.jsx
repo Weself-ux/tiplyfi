@@ -14,6 +14,58 @@ import WalletPicker from "../../../utils/WalletPicker";
 import { confirmTip, flushTipQueue } from "../../../utils/tipQueue";
 import Logo from "../../../utils/Logo";
 
+/// Runs on the server, so title and Open Graph tags land in the initial HTML.
+/// Unfurlers on X, WhatsApp and Discord never execute JavaScript, so without
+/// this a shared creator link previews as a blank card.
+export async function loader({ params, request }) {
+  try {
+    const origin = new URL(request.url).origin;
+    const res = await fetch(`${origin}/api/user/${params.username}`);
+    if (!res.ok) return { creator: null, username: params.username };
+    return { creator: await res.json(), username: params.username };
+  } catch {
+    return { creator: null, username: params.username };
+  }
+}
+
+export function meta({ data }) {
+  const c = data?.creator;
+  const handle = data?.username || "";
+
+  if (!c) {
+    return [
+      { title: "Tiplyfi" },
+      { name: "robots", content: "noindex" },
+    ];
+  }
+
+  const name = c.displayName || c.username;
+  const title = `Support ${name} on Tiplyfi`;
+  const description =
+    c.bio?.trim() ||
+    `Send ${name} a tip in USDC. It arrives in under a second, straight to their wallet.`;
+  const url = `https://tiplyfi.vercel.app/${handle}`;
+
+  // A page with no bio and no tips is thin content. Indexing it earns nothing
+  // and dilutes the pages that do have something to say.
+  const thin = !c.bio?.trim() && !c.category && (c.tipCount || 0) === 0;
+
+  return [
+    { title },
+    { name: "description", content: description },
+    { tagName: "link", rel: "canonical", href: url },
+    ...(thin ? [{ name: "robots", content: "noindex, follow" }] : []),
+    { property: "og:type", content: "profile" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:url", content: url },
+    { property: "og:site_name", content: "Tiplyfi" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+  ];
+}
+
 const AMOUNTS = ["1", "5", "10", "25"];
 
 const NETWORKS = [

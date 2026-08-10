@@ -66,6 +66,25 @@ function Section({ children, className = "" }) {
   );
 }
 
+export function meta() {
+  const title = "Tiplyfi — get paid in USDC, in under a second";
+  const description =
+    "One link your supporters can tip through. No card processor, no payout delay, no account for them to create. 6% flat.";
+  return [
+    { title },
+    { name: "description", content: description },
+    { tagName: "link", rel: "canonical", href: "https://tiplyfi.vercel.app/" },
+    { property: "og:type", content: "website" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:url", content: "https://tiplyfi.vercel.app/" },
+    { property: "og:site_name", content: "Tiplyfi" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+  ];
+}
+
 export default function LandingPage() {
   const [handle, setHandle] = useState("");
   const magnetRef = useMagnet();

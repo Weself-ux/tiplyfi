@@ -126,6 +126,9 @@ export default function ProfilePage() {
   }, []);
 
   async function save(patch) {
+    // Optimistic, but reconciled below — the server rejects some values
+    // (a link with no dot in the hostname, for one) and the UI must not
+    // keep showing something that wasn't stored.
     setProfile((p) => ({ ...p, ...patch }));
     try {
       const token = localStorage.getItem("tiplyfi_token");
@@ -138,6 +141,12 @@ export default function ProfilePage() {
         body: JSON.stringify(patch),
       });
       if (!res.ok) throw new Error();
+
+      const fresh = await fetch("/api/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => (r.ok ? r.json() : null));
+      if (fresh) setProfile((p) => ({ ...p, ...fresh }));
+
       setSaved(true);
       setTimeout(() => setSaved(false), 1800);
     } catch {
@@ -184,11 +193,6 @@ export default function ProfilePage() {
             <ArrowLeft size={18} />
           </button>
           <span className="display-md text-[17px] text-[#111827]">Your page</span>
-          {saved && (
-            <span className="ml-auto flex items-center gap-1 text-xs text-green-600 font-medium">
-              <Check size={13} /> Saved
-            </span>
-          )}
         </div>
       </nav>
 
@@ -267,6 +271,22 @@ export default function ProfilePage() {
               </Row>
             ))}
           </div>
+        </div>
+
+        <div
+          className={`flex items-center justify-center gap-2 mb-5 transition-all duration-500 ${
+            saved ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+          }`}
+        >
+          <span
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white"
+            style={{
+              background: "linear-gradient(120deg, var(--violet), var(--azure))",
+              boxShadow: "0 8px 24px -10px rgba(124,58,237,0.7)",
+            }}
+          >
+            <Check size={15} /> Saved
+          </span>
         </div>
 
         <div className="card p-6 mb-4">

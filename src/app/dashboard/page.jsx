@@ -204,15 +204,6 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Link-in-bio rate is the metric that matters, so the prompt stays until
-  // the creator has actually shared once.
-  const [hasShared, setHasShared] = useState(true);
-
-  useEffect(() => {
-    try {
-      setHasShared(localStorage.getItem("tiplyfi_link_shared") === "1");
-    } catch {}
-  }, []);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -300,7 +291,6 @@ export default function Dashboard() {
     try {
       localStorage.setItem("tiplyfi_link_shared", "1");
     } catch {}
-    setHasShared(true);
   }
 
   function shareTo(platform) {
@@ -548,68 +538,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stats */}
-        {!hasShared && (
-          <div
-            className="card p-6 mb-6 rise"
-            style={{
-              "--d": "0.02s",
-              background:
-                "linear-gradient(120deg, rgba(124,58,237,0.10), rgba(59,130,246,0.08))",
-              borderColor: "rgba(124,58,237,0.22)",
-            }}
-          >
-            <h3 className="display-md text-[#111827] text-[17px] mb-1">
-              Your link is live. Now put it somewhere.
-            </h3>
-            <p className="text-sm text-[#6B7280] mb-4 max-w-[520px]">
-              Nobody can tip you until they can find you. Creators who add
-              their link to a bio on day one get their first tip far sooner.
-            </p>
-
-            <div className="flex items-center gap-2 mb-4">
-              <code className="flex-1 font-mono-t text-[13px] text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-xl px-3 py-2.5 truncate">
-                {tipLink}
-              </code>
-              <button
-                onClick={copyLink}
-                className="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex-shrink-0"
-              >
-                {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-[#9CA3AF] mr-1">Post to</span>
-              {[
-                ["x", "X"],
-                ["whatsapp", "WhatsApp"],
-                ["telegram", "Telegram"],
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => shareTo(id)}
-                  className="px-3 py-1.5 text-xs font-medium text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-lg hover:border-[#C4B5FD] hover:text-[#111827] transition-colors"
-                >
-                  {label}
-                </button>
-              ))}
-              <button
-                onClick={markShared}
-                className="ml-auto text-xs text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
-              >
-                Already done
-              </button>
-            </div>
-            <p className="text-xs text-[#9CA3AF] mt-3">
-              For Instagram, TikTok and other social medias copy the link and paste it into your
-              bio — that's where it keeps working long after a post scrolls by.
-            </p>
-            <div className="hidden">
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
           <div className="stat rise" style={{ "--d": "0.05s" }}>
             <p className="label-xs text-[#9CA3AF] mb-3">Wallet balance</p>
@@ -686,25 +614,61 @@ export default function Dashboard() {
         {activeTab === "overview" && (
           <div className="space-y-4">
             {/* Share link */}
-            <div className="card p-6">
-              <h3 className="text-base font-semibold text-[#111827] mb-1">
-                Share Your Tiplyfi
-              </h3>
-              <p className="text-sm text-[#6B7280] mb-4">
-                Send this link to your audience so they can tip you in USDC
-              </p>
-              <div className="flex items-center gap-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-4 py-3">
-                <code className="flex-1 text-sm text-[#7c3aed] break-all">
-                  {tipLink}
-                </code>
-                <button
-                  onClick={copyLink}
-                  className="px-3 py-1.5 text-xs font-semibold text-white bg-[#7c3aed] rounded-lg hover:bg-[#6d28d9] flex-shrink-0"
-                >
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
+            {true && (
+          <div
+            className="card p-6 mb-6 rise"
+            style={{
+              "--d": "0.02s",
+              background:
+                "linear-gradient(120deg, rgba(124,58,237,0.10), rgba(59,130,246,0.08))",
+              borderColor: "rgba(124,58,237,0.22)",
+            }}
+          >
+            <h3 className="display-md text-[#111827] text-[17px] mb-1">
+              Your link is live. Now put it somewhere.
+            </h3>
+            <p className="text-sm text-[#6B7280] mb-4 max-w-[520px]">
+              Nobody can tip you until they can find you. Creators who add
+              their link to a bio on day one get their first tip far sooner.
+            </p>
+
+            <div className="flex items-center gap-2 mb-4">
+              <code className="flex-1 font-mono-t text-[13px] text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-xl px-3 py-2.5 truncate">
+                {tipLink}
+              </code>
+              <button
+                onClick={copyLink}
+                className="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex-shrink-0"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
             </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-[#9CA3AF] mr-1">Post to</span>
+              {[
+                ["x", "X"],
+                ["whatsapp", "WhatsApp"],
+                ["telegram", "Telegram"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => shareTo(id)}
+                  className="px-3 py-1.5 text-xs font-medium text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-lg hover:border-[#C4B5FD] hover:text-[#111827] transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
+              
+            </div>
+            <p className="text-xs text-[#9CA3AF] mt-3">
+              For Instagram, TikTok and other social medias copy the link and paste it into your
+              bio — that's where it keeps working long after a post scrolls by.
+            </p>
+            <div className="hidden">
+            </div>
+          </div>
+        )}
 
             {/* Recent Activity */}
             <div className="card p-6">
