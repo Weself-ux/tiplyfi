@@ -90,22 +90,6 @@ export function usdcToWeiHex(usdcAmount) {
   return "0x" + wei.toString(16);
 }
 
-// Fetch transaction history from Arc Explorer (Blockscout API)
-export async function getTransactions(address, page = 1, limit = 20) {
-  const url = `${ARC_CONFIG.explorerUrl}/api?module=account&action=txlist&address=${address}&sort=desc&page=${page}&offset=${limit}`;
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Explorer API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  if (data.status === "1" && Array.isArray(data.result)) {
-    return data.result;
-  }
-  return [];
-}
-
 // Verify a tip transaction actually happened on-chain before trusting it.
 // Without this, anyone could POST a made-up txHash/amount and have it
 // recorded as a real tip with nothing actually moving on-chain.
