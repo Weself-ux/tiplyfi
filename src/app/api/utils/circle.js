@@ -83,6 +83,19 @@ export async function initializeUserWallet(userToken) {
   return data?.data?.challengeId || null;
 }
 
+/// Extends a session before the 14-day userToken expiry.
+export async function refreshUserToken(userToken, refreshToken) {
+  const data = await circleFetch("/users/token/refresh", {
+    method: "POST",
+    body: { userToken, refreshToken },
+  });
+  return {
+    userToken: data?.data?.userToken,
+    refreshToken: data?.data?.refreshToken,
+    encryptionKey: data?.data?.encryptionKey,
+  };
+}
+
 export async function listUserWallets(userToken) {
   const data = await circleFetch("/wallets", { userToken });
   return data?.data?.wallets || [];

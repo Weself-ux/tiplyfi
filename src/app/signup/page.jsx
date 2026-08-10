@@ -43,6 +43,7 @@ export default function SignupPage() {
       authRef.current = {
         userToken: result.userToken,
         encryptionKey: result.encryptionKey,
+        refreshToken: result.refreshToken,
         provider: oauth.provider || "google",
         socialUserUUID: oauth.socialUserUUID || null,
         email: oauth.socialUserInfo?.email || null,
@@ -63,6 +64,8 @@ export default function SignupPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userToken: authRef.current.userToken,
+            refreshToken: authRef.current.refreshToken,
+            encryptionKey: authRef.current.encryptionKey,
             provider: authRef.current.provider,
             socialUserUUID: authRef.current.socialUserUUID,
             email: authRef.current.email,
@@ -157,6 +160,8 @@ export default function SignupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userToken: auth.userToken,
+          refreshToken: auth.refreshToken,
+          encryptionKey: auth.encryptionKey,
           provider: auth.provider,
           socialUserUUID: auth.socialUserUUID,
           email: auth.email,
@@ -318,11 +323,12 @@ export default function SignupPage() {
               Securing your wallet
             </h1>
             <p className="text-sm text-[#6B7280] mb-4">
-              Set a PIN and answer your security questions.
+              Creating your wallet.
             </p>
             <p className="text-xs text-[#92400E] bg-[#FFFBEB] border border-[#FDE68A] rounded-xl px-4 py-3 text-left">
-              Write these down somewhere safe. Nobody — not Tiplyfi, not Circle —
-              can recover your account or your money without them.
+              Keep access to this Google account. It's how you get back into
+              your wallet, and nobody — not Tiplyfi, not Circle — can restore it
+              for you.
             </p>
           </div>
         )}

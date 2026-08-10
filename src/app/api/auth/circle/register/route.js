@@ -1,3 +1,4 @@
+import { setCircleCookies } from "@/app/api/utils/circle-session";
 import sql from "@/app/api/utils/sql";
 import {
   createSession,
@@ -19,8 +20,16 @@ export async function action({ request }) {
     }
 
     const body = await request.json();
-    const { userToken, provider, socialUserUUID, email, name, claimToken } =
-      body;
+    const {
+      userToken,
+      refreshToken,
+      encryptionKey,
+      provider,
+      socialUserUUID,
+      email,
+      name,
+      claimToken,
+    } = body;
     const username = String(body.username || "").toLowerCase().trim();
 
     if (!userToken || !socialUserUUID) {
@@ -126,13 +135,16 @@ export async function action({ request }) {
     }
 
     const token = await createSession(userId);
-    return Response.json({
-      success: true,
-      token,
-      challengeId,
-      userId,
-      alreadyInitialised,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        token,
+        challengeId,
+        userId,
+        alreadyInitialised,
+      }),
+      { headers: setCircleCookies({ userToken, refreshToken, encryptionKey }) },
+    );
   } catch (err) {
     console.error("Circle register error:", err);
     return Response.json({ error: "Could not create your account." }, { status: 500 });

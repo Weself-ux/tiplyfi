@@ -1,10 +1,11 @@
+import { setCircleCookies } from "@/app/api/utils/circle-session";
 import sql from "@/app/api/utils/sql";
 import { createSession } from "@/app/api/utils/auth-helpers";
 import { listUserWallets } from "@/app/api/utils/circle";
 
 export async function action({ request }) {
   try {
-    const { userToken, provider, socialUserUUID, email } =
+    const { userToken, refreshToken, encryptionKey, provider, socialUserUUID, email } =
       await request.json();
 
     if (!userToken || !socialUserUUID) {
@@ -39,7 +40,8 @@ export async function action({ request }) {
     const user = rows[0];
     const token = await createSession(user.id);
 
-    return Response.json({
+    return new Response(
+      JSON.stringify({
       registered: true,
       token,
       needsWallet: !user.wallet_address,
@@ -50,7 +52,9 @@ export async function action({ request }) {
         walletAddress: user.wallet_address,
         weselfId: user.weself_id,
       },
-    });
+      }),
+      { headers: setCircleCookies({ userToken, refreshToken, encryptionKey }) },
+    );
   } catch (err) {
     console.error("Circle login error:", err);
     return Response.json({ error: "Something went wrong." }, { status: 500 });
