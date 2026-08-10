@@ -174,7 +174,7 @@ export default function ProfilePage() {
   const socialLinks = profile.socialLinks || {};
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] font-inter">
+    <div className="page-light">
       <nav className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB]">
         <div className="max-w-[560px] mx-auto px-6 flex items-center gap-3 h-14">
           <button
@@ -265,7 +265,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-4">
+        <div className="card p-6 mb-4">
           <h2 className="text-base font-semibold text-[#111827] mb-4">
             Appearance
           </h2>
@@ -291,7 +291,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-4">
+        <div className="card p-6 mb-4">
           <h2 className="text-base font-semibold text-[#111827] mb-1">
             Custom message
           </h2>
@@ -310,7 +310,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+        <div className="card p-6">
           <h2 className="text-base font-semibold text-[#111827] mb-3">
             Your link
           </h2>

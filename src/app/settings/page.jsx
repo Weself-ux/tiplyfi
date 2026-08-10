@@ -31,7 +31,7 @@ const LANGUAGES = [
 
 function Section({ title, children }) {
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-4">
+    <div className="card p-6 mb-4">
       <h2 className="text-base font-semibold text-[#111827] mb-4">{title}</h2>
       {children}
     </div>
@@ -219,7 +219,7 @@ export default function SettingsPage() {
     : "—";
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] font-inter">
+    <div className="page-light">
       <nav className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB]">
         <div className="max-w-[720px] mx-auto px-6 flex items-center gap-3 h-14">
         <a            

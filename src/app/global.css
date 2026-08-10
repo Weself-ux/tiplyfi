@@ -127,6 +127,72 @@
   }
   .btn-primary:active { transform: translateY(0); }
 
+  /* ── Light surfaces: dashboard, settings, profile ───────────── */
+
+  /* Not a flat grey. Two faint washes keep the light pages in the same
+     family as the dark ones without hurting readability. */
+  .page-light {
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse 80% 50% at 12% -10%, rgba(124, 58, 237, 0.07), transparent 62%),
+      radial-gradient(ellipse 60% 45% at 94% -2%, rgba(59, 130, 246, 0.06), transparent 62%),
+      var(--paper);
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.07);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04),
+                0 8px 24px -16px rgba(17, 24, 39, 0.18);
+  }
+
+  .stat {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.07);
+    border-radius: 16px;
+    padding: 20px 22px;
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04),
+                0 8px 24px -16px rgba(17, 24, 39, 0.18);
+    transition: transform 0.45s var(--ease-out-expo),
+                box-shadow 0.45s var(--ease-out-expo);
+  }
+  .stat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05),
+                0 20px 44px -22px rgba(124, 58, 237, 0.4);
+  }
+
+  /* Figures are data: mono, tabular, so they don't jitter as they update. */
+  .stat-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  .label-xs {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .tab-pill { position: relative; transition: color 0.3s ease; }
+  .tab-pill::after {
+    content: '';
+    position: absolute;
+    left: 14px; right: 14px; bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--violet), var(--azure));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s var(--ease-out-expo);
+  }
+  .tab-pill[data-active='true']::after { transform: scaleX(1); }
+
   /* Magnetic: JS writes --mx/--my, CSS does the moving. No library. */
   .magnetic {
     transition: transform 0.4s var(--ease-out-expo);

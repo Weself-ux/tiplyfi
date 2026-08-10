@@ -18,6 +18,7 @@ import {
   History,
 } from "lucide-react";
 import useSession from "../../utils/useSession";
+import Logo from "../../utils/Logo";
 import {
   formatAddress,
   ARC_EXPLORER,
@@ -93,7 +94,7 @@ function SendUSDCForm({ walletAddress, username }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+    <div className="card p-6">
       <h3 className="text-base font-semibold text-[#111827] mb-1">
         Withdraw USDC
       </h3>
@@ -396,21 +397,24 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] font-inter">
+    <div className="page-light">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-[1000px] mx-auto px-6 flex items-center justify-between h-14">
-          <a
-            href="/"
-            className="text-lg font-semibold text-[#111827] tracking-tight flex items-center gap-2"
+     <nav
+        className="sticky top-0 z-50 border-b border-[rgba(17,24,39,0.07)]"
+        style={{
+          background: "rgba(250,250,252,0.82)",
+          backdropFilter: "blur(16px) saturate(160%)",
+          WebkitBackdropFilter: "blur(16px) saturate(160%)",
+        }}
+      >
+        <div className="max-w-[1000px] mx-auto px-6 flex items-center justify-between h-16">
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="display-md text-[17px] text-[#111827] flex items-center gap-2.5"
           >
-            <img
-              src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tiplyfi"
-              className="w-6 h-6 rounded"
-            />
+            <Logo size={26} />
             Tiplyfi
-          </a>
+          </button>
           <div className="relative flex items-center gap-3">
             <span className="text-sm text-[#6B7280]">@{user.username}</span>
             <button
@@ -490,47 +494,57 @@ export default function Dashboard() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-            <p className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">
-              USDC Balance
-            </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
+          <div className="stat rise" style={{ "--d": "0.05s" }}>
+            <p className="label-xs text-[#9CA3AF] mb-3">Wallet balance</p>
             {balanceLoading ? (
-              <p className="text-sm text-[#6B7280]">Fetching...</p>
+              <p className="stat-value text-2xl text-[#D1D5DB]">—</p>
             ) : (
-              <p className="text-2xl font-semibold text-[#111827]">
-                {balanceData?.balanceUsdc || "0.0000"}{" "}
-                <span className="text-sm font-normal text-[#6B7280]">USDC</span>
+              <p className="stat-value text-[26px] text-[#111827]">
+                {balanceData?.balanceUsdc || "0.0000"}
+                <span className="text-sm text-[#9CA3AF] ml-1.5 font-normal">
+                  USDC
+                </span>
               </p>
             )}
-            <p className="text-xs text-[#6B7280] mt-1">Live on Arc Testnet</p>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span
+                className="w-1.5 h-1.5 rounded-full settle-pulse"
+                style={{ background: "var(--settle)" }}
+              />
+              <span className="text-[11px] text-[#9CA3AF]">
+                Live on Arc Testnet
+              </span>
+            </div>
           </div>
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-            <p className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">
-              Tips Received
+
+          <div className="stat rise" style={{ "--d": "0.13s" }}>
+            <p className="label-xs text-[#9CA3AF] mb-3">Tips received</p>
+            <p className="stat-value text-[26px] text-[#111827]">
+              {analyticsData?.tipCount || incomingTxns.length}
+              <span className="text-sm text-[#9CA3AF] ml-1.5 font-normal">
+                tips
+              </span>
             </p>
-            <p className="text-2xl font-semibold text-[#111827]">
-              {analyticsData?.tipCount || incomingTxns.length}{" "}
-              <span className="text-sm font-normal text-[#6B7280]">tips</span>
-            </p>
-            <p className="text-xs text-[#6B7280] mt-1">All time</p>
+            <p className="text-[11px] text-[#9CA3AF] mt-2">All time</p>
           </div>
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-            <p className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">
-              All-Time Tip Amount
+
+          <div className="stat rise" style={{ "--d": "0.21s" }}>
+            <p className="label-xs text-[#9CA3AF] mb-3">Earned from tips</p>
+            <p className="stat-value text-[26px] text-[#111827]">
+              {(analyticsData?.totalEarnings || 0).toFixed(2)}
+              <span className="text-sm text-[#9CA3AF] ml-1.5 font-normal">
+                USDC
+              </span>
             </p>
-            <p className="text-2xl font-semibold text-[#111827]">
-              {(analyticsData?.totalEarnings || 0).toFixed(2)}{" "}
-              <span className="text-sm font-normal text-[#6B7280]">USDC</span>
-            </p>
-            <p className="text-xs text-[#6B7280] mt-1">
+            <p className="text-[11px] text-[#9CA3AF] mt-2">
               Since your first tip
             </p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-0 mb-6 border-b border-[#E5E7EB]">
+        <div className="flex mb-7 border-b border-[rgba(17,24,39,0.08)] overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -538,9 +552,14 @@ export default function Dashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 pb-3 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${isActive ? "text-[#111827] border-[#7c3aed]" : "text-[#6B7280] border-transparent hover:text-[#111827]"}`}
+                data-active={isActive}
+                className={`tab-pill flex items-center gap-2 px-4 pb-3.5 text-sm font-medium whitespace-nowrap ${
+                  isActive
+                    ? "text-[#111827]"
+                    : "text-[#9CA3AF] hover:text-[#4B5563]"
+                }`}
               >
-                <Icon size={16} />
+                <Icon size={15} />
                 {tab.label}
               </button>
             );
@@ -551,7 +570,7 @@ export default function Dashboard() {
         {activeTab === "overview" && (
           <div className="space-y-4">
             {/* Share link */}
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+            <div className="card p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
                 Share Your Tiplyfi
               </h3>
@@ -572,7 +591,7 @@ export default function Dashboard() {
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+            <div className="card p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
                 Recent Activity
               </h3>
@@ -627,7 +646,7 @@ export default function Dashboard() {
         )}
 
        {activeTab === "history" && (
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+          <div className="card p-6">
             <h3 className="text-base font-semibold text-[#111827] mb-1">
               History
             </h3>
@@ -700,7 +719,7 @@ export default function Dashboard() {
 {activeTab === "analytics" && (
           <div className="space-y-4">
             {/* Earnings Overview */}
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+            <div className="card p-6">
               <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                 <h3 className="text-base font-semibold text-[#111827]">
                   Monthly Earnings
@@ -761,7 +780,7 @@ export default function Dashboard() {
             </div>
 
             {/* Top Supporters */}
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+            <div className="card p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
                 Top Supporters
               </h3>
@@ -804,7 +823,7 @@ export default function Dashboard() {
 
         {activeTab === "engagement" && (
           <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+            <div className="card p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
                 Turn one-off tips into regulars
               </h3>
@@ -845,7 +864,7 @@ export default function Dashboard() {
             ].map((g) => (
               <div
                 key={g.title}
-                className="bg-white rounded-xl border border-[#E5E7EB] p-6"
+                className="card p-6"
               >
                 <h3 className="text-base font-semibold text-[#111827] mb-3">
                   {g.title}
@@ -868,7 +887,7 @@ export default function Dashboard() {
 
         {activeTab === "wallet" && (
           <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+            <div className="card p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
                 Your Wallet
               </h3>
@@ -896,7 +915,7 @@ export default function Dashboard() {
               </a>
             </div>
 
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+            <div className="card p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
            
               </h3>
