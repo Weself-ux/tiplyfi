@@ -73,6 +73,16 @@ export default function SignupPage() {
           throw new Error(data.detail || data.error || "Sign-in failed.");
         }
 
+        // Diagnostic: Circle's own record of this user's PIN state.
+        fetch("/api/auth/circle/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userToken: authRef.current.userToken }),
+        })
+          .then((r) => r.json())
+          .then((d) => console.log("[tiplyfi] circle user status", d))
+          .catch(() => {});
+
         if (data.registered) {
           localStorage.setItem("tipjar_token", data.token);
           window.location.href = "/dashboard";

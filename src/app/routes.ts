@@ -20,6 +20,7 @@ export default [
   route('api/auth/circle/login', './api/auth/circle/login/route.js'),
   route('api/auth/circle/register', './api/auth/circle/register/route.js'),
   route('api/auth/circle/complete', './api/auth/circle/complete/route.js'),
+  route('api/auth/circle/status', './api/auth/circle/status/route.js'),
   route('api/tips/history', './api/tips/history/route.js'),
   route('api/tips/analytics', './api/tips/analytics/route.js'),
   route('api/tips/record', './api/tips/record/route.js'),
