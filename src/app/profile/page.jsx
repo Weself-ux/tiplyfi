@@ -183,7 +183,7 @@ export default function ProfilePage() {
           >
             <ArrowLeft size={18} />
           </button>
-          <span className="display-md text-[17px] text-[#111827]">Settings</span>
+          <span className="display-md text-[17px] text-[#111827]">Your page</span>
           {saved && (
             <span className="ml-auto flex items-center gap-1 text-xs text-green-600 font-medium">
               <Check size={13} /> Saved

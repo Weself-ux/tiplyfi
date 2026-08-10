@@ -5,6 +5,7 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import {
   initSdk,
   startGoogleLogin,
+  prepareDeviceSession,
   executeChallenge,
   isLoginPending,
   clearLoginPending,
@@ -101,6 +102,9 @@ export default function SignupPage() {
         const sdk = await initSdk(onLoginComplete);
         if (cancelled) return;
         sdkRef.current = sdk;
+        // Warm the device session while the page is being read, so the click
+        // only has to redirect.
+        prepareDeviceSession(sdk).catch(() => {});
         // A pending flag means we have just come back from Google and the
         // callback is about to fire — keep the spinner up until it does.
         if (isLoginPending()) {
@@ -233,7 +237,22 @@ export default function SignupPage() {
             </p>
           )}
 
-          {step === "start" && (
+          {/* Returning from Google. Both /login and /signup come back here,
+              so the form must not flash while we work out which you are. */}
+          {step === "start" && busy && (
+            <div className="text-center py-6">
+              <Loader2
+                size={26}
+                className="text-[var(--violet-lo)] animate-spin mx-auto mb-5"
+              />
+              <h1 className="display-md text-white text-xl mb-1">
+                Signing you in
+              </h1>
+              <p className="text-sm text-[var(--muted)]">One moment.</p>
+            </div>
+          )}
+
+          {step === "start" && !busy && (
             <>
               <h1 className="display-lg text-white text-[26px] mb-2">
                 Start accepting tips

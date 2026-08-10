@@ -93,27 +93,42 @@ export async function ensureDeviceId(sdk) {
   return id;
 }
 
-/// Gets a device-bound session from our backend, stores it so it survives the
-/// redirect, then hands the page to Google. Does not return.
-export async function startGoogleLogin(sdk) {
-  const deviceId = await ensureDeviceId(sdk);
-  if (!deviceId) throw new Error("No device id returned by the SDK.");
+/// Fetched on mount rather than on click: nothing about it depends on the
+/// user, so making them wait for two round trips after clicking is wasted time.
+let devicePrep = null;
 
-  const res = await fetch("/api/auth/circle/device", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ deviceId }),
+export function prepareDeviceSession(sdk) {
+  if (devicePrep) return devicePrep;
+  devicePrep = (async () => {
+    const deviceId = await ensureDeviceId(sdk);
+    if (!deviceId) throw new Error("No device id returned by the SDK.");
+
+    const res = await fetch("/api/auth/circle/device", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || data.error || "Could not start sign-in.");
+    }
+    if (!data.deviceToken || !data.deviceEncryptionKey) {
+      throw new Error("Circle returned an incomplete device session.");
+    }
+
+    write(STORE.deviceToken, data.deviceToken);
+    write(STORE.deviceEncryptionKey, data.deviceEncryptionKey);
+    return data;
+  })().catch((err) => {
+    devicePrep = null; // let the click retry rather than cache the failure
+    throw err;
   });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.detail || data.error || "Could not start sign-in.");
-  }
+  return devicePrep;
+}
 
-  if (!data.deviceToken || !data.deviceEncryptionKey) {
-    throw new Error("Circle returned an incomplete device session.");
-  }
-  write(STORE.deviceToken, data.deviceToken);
-  write(STORE.deviceEncryptionKey, data.deviceEncryptionKey);
+/// Hands the page to Google. Does not return.
+export async function startGoogleLogin(sdk) {
+  await prepareDeviceSession(sdk);
   write(STORE.pending, "1");
 
   sdk.updateConfigs(config());

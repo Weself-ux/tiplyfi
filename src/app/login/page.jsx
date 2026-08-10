@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { initSdk, startGoogleLogin } from "../../utils/circleSdk";
+import {
+  initSdk,
+  startGoogleLogin,
+  prepareDeviceSession,
+} from "../../utils/circleSdk";
 import Atmosphere from "../../utils/Atmosphere";
 import Logo from "../../utils/Logo";
 
@@ -17,6 +21,9 @@ export default function LoginPage() {
         const sdk = await initSdk(() => {});
         if (cancelled) return;
         sdkRef.current = sdk;
+        // Warm the device session while the page is being read, so the click
+        // only has to redirect.
+        prepareDeviceSession(sdk).catch(() => {});
         setReady(true);
       } catch (e) {
         setError(e.message);
