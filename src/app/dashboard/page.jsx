@@ -12,6 +12,7 @@ import {
   BarChart3,
   Wallet,
   LayoutDashboard,
+  Trophy,
   Loader2,
   Eye,
   History,

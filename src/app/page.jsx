@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import Logo from "../utils/Logo";
 import Atmosphere from "../utils/Atmosphere";
 
 /// Pulls the button a few pixels toward the cursor. CSS does the movement;
@@ -79,9 +80,7 @@ export default function LandingPage() {
     <Atmosphere>
       {/* ── Nav ─────────────────────────────────────────────────── */}
       <nav className="max-w-[1180px] mx-auto px-6 h-20 flex items-center justify-between fade" style={{ "--d": "0.1s" }}>
-        <span className="display-md text-white text-[19px] tracking-tight">
-          Tiplyfi
-        </span>
+        <Logo size={30} showWord className="text-white" />
         <div className="flex items-center gap-7">
           <button
             onClick={() => (window.location.href = "/howitworks")}
@@ -292,49 +291,67 @@ export default function LandingPage() {
           <div>
             <p className="eyebrow text-[var(--muted)] mb-5">One fee, no stack</p>
             <h2 className="display-lg text-white text-[clamp(1.9rem,3.6vw,2.9rem)]">
-              6% flat.
+              Small tips are
               <br />
-              Nothing on top.
+              where fees hurt.
             </h2>
             <p className="text-[var(--muted)] leading-relaxed mt-6 max-w-[380px]">
-              Card platforms charge a platform fee, then a processor takes
-              another cut plus a fixed 30 cents. On small tips that fixed
-              charge is what hurts.
+              Card platforms take a percentage, then a payment processor takes
+              another percentage plus a flat charge. That flat charge doesn't
+              care that the tip was small — which is why a few dollars can
+              lose most of its value on the way to you.
+            </p>
+            <p className="text-[var(--muted)] leading-relaxed mt-4 max-w-[380px]">
+              Tiplyfi has one fee and no processor. Nothing is added on top.
             </p>
           </div>
 
-          <div className="glass glass-lit rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-[var(--line)] flex justify-between">
-              <span className="eyebrow text-[var(--muted)]">On a $5 tip</span>
-              <span className="eyebrow text-[var(--muted)]">You keep</span>
-            </div>
-            {[
-              { n: "Tiplyfi", v: "$4.70", best: true },
-              { n: "Ko-fi", v: "$4.56", best: false },
-              { n: "Buy Me a Coffee", v: "$4.31", best: false },
-              { n: "Patreon", v: "$4.06", best: false },
-            ].map((r) => (
-              <div
-                key={r.n}
-                className="px-6 py-4 flex items-center justify-between border-b border-[var(--line)] last:border-0"
-              >
-                <span
-                  className={`text-sm ${r.best ? "text-white font-semibold" : "text-[var(--muted)]"}`}
-                >
-                  {r.n}
-                </span>
-                <span
-                  className={`font-mono-t text-[15px] ${r.best ? "text-settle" : "text-[var(--muted)]"}`}
-                >
-                  {r.v}
-                </span>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="glass rounded-2xl p-6">
+              <p className="eyebrow text-[var(--muted)] mb-5">
+                A typical card platform
+              </p>
+              {[
+                ["Platform fee", "−$0.25"],
+                ["Processor fee", "−$0.15"],
+                ["Fixed charge", "−$0.30"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between py-2 text-sm">
+                  <span className="text-[var(--muted)]">{k}</span>
+                  <span className="font-mono-t text-[var(--muted)]">{v}</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-3 mt-2 border-t border-[var(--line)]">
+                <span className="text-sm text-white">You keep</span>
+                <span className="font-mono-t text-[17px] text-white">$4.30</span>
               </div>
-            ))}
+            </div>
+
+            <div className="glass glass-lit rounded-2xl p-6 border-[rgba(45,212,167,0.28)]">
+              <p className="eyebrow text-settle mb-5">Tiplyfi</p>
+              <div className="flex justify-between py-2 text-sm">
+                <span className="text-[var(--muted)]">Tiplyfi fee</span>
+                <span className="font-mono-t text-[var(--muted)]">−$0.30</span>
+              </div>
+              <div className="flex justify-between py-2 text-sm">
+                <span className="text-[var(--muted)]">Processor fee</span>
+                <span className="font-mono-t text-[var(--muted)]">none</span>
+              </div>
+              <div className="flex justify-between py-2 text-sm">
+                <span className="text-[var(--muted)]">Fixed charge</span>
+                <span className="font-mono-t text-[var(--muted)]">none</span>
+              </div>
+              <div className="flex justify-between pt-3 mt-2 border-t border-[var(--line)]">
+                <span className="text-sm text-white">You keep</span>
+                <span className="font-mono-t text-[17px] text-settle">$4.70</span>
+              </div>
+            </div>
           </div>
         </div>
-        <p className="text-xs text-[rgba(139,138,165,0.7)] mt-5">
-          Competitor figures include typical card processing of 2.9% + $0.30.
-          Above roughly $10 a tip, Ko-fi's percentage-only model overtakes ours.
+        <p className="text-xs text-[rgba(139,138,165,0.7)] mt-6 max-w-[620px]">
+          Based on a $5 tip, with card processing at 2.9% plus a flat 30 cents —
+          the standard rate most creator platforms pass through. Your own
+          platform's rates may differ.
         </p>
       </Section>
 
@@ -351,7 +368,7 @@ export default function LandingPage() {
             {
               n: "02",
               t: "Share it anywhere",
-              d: "Bio, stream overlay, video description, group chat. Your supporters need no account to send you money.",
+              d: "X, YouTube, TikTok, Discord, your stream overlay, your bio. Supporters need no account to send you money.",
             },
             {
               n: "03",
@@ -444,27 +461,40 @@ export default function LandingPage() {
       </Section>
 
       <footer className="border-t border-[var(--line)] mt-10">
-        <div className="max-w-[1180px] mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
-          <span className="text-sm text-[var(--muted)]">
-            Tiplyfi — a Weself product
-          </span>
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => (window.location.href = "/howitworks")}
-              className="text-sm text-[var(--muted)] hover:text-white transition-colors"
-            >
-              How it works
-            </button>
-            <button
-              onClick={() =>
-                window.open("mailto:tipjar011@gmail.com", "_self")
-              }
-              className="text-sm text-[var(--muted)] hover:text-white transition-colors"
-            >
-              Contact
-            </button>
+        <div className="max-w-[1180px] mx-auto px-6 py-10">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <Logo size={28} showWord className="text-white" />
+            <div className="flex flex-wrap items-center gap-7">
+              <button
+                onClick={() => (window.location.href = "/howitworks")}
+                className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+              >
+                How it works
+              </button>
+              <button
+                onClick={() => window.open("mailto:tipjar011@gmail.com", "_self")}
+                className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+              >
+                Contact us
+              </button>
+              <button
+                onClick={() => (window.location.href = "/signup")}
+                className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+              >
+                Get your link
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--line)]">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--settle)] settle-pulse" />
+              <span className="font-mono-t text-[11px] text-settle">
+                Live on Arc Testnet
+              </span>
+            </div>
             <span className="font-mono-t text-[11px] text-[rgba(139,138,165,0.6)]">
-              USDC on Arc · Testnet
+              Built on Arc &amp; Circle
             </span>
           </div>
         </div>
