@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import {
   initSdk,
   startGoogleLogin,
+  isOauthReturn,
   prepareDeviceSession,
 } from "../../utils/circleSdk";
 import Atmosphere from "../../utils/Atmosphere";
@@ -18,12 +19,49 @@ export default function LoginPage() {
     let cancelled = false;
     (async () => {
       try {
-        const sdk = await initSdk(() => {});
+        const sdk = await initSdk(async (err, result) => {
+          if (err || !result?.userToken) {
+            setError(err?.message || "Sign-in was cancelled.");
+            setBusy(false);
+            return;
+          }
+          const oauth = result.oAuthInfo || result.oauthInfo || {};
+          try {
+            const res = await fetch("/api/auth/circle/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userToken: result.userToken,
+                refreshToken: result.refreshToken,
+                encryptionKey: result.encryptionKey,
+                provider: oauth.provider || "google",
+                socialUserUUID: oauth.socialUserUUID || null,
+                email: oauth.socialUserInfo?.email || null,
+              }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Sign-in failed.");
+
+            // No account for this Google identity — finish signing up.
+            if (!data.registered) {
+              window.location.href = "/signup";
+              return;
+            }
+            localStorage.setItem("tipjar_token", data.token);
+            window.location.replace("/dashboard");
+          } catch (e) {
+            setError(e.message);
+            setBusy(false);
+          }
+        });
         if (cancelled) return;
+        if (isOauthReturn()) setBusy(true);
         sdkRef.current = sdk;
         // Warm the device session while the page is being read, so the click
         // only has to redirect.
-        prepareDeviceSession(sdk).catch(() => {});
+        // Never while Google's response is being processed — a new token
+        // would invalidate the one it's being checked against.
+        if (!isOauthReturn()) prepareDeviceSession(sdk).catch(() => {});
         setReady(true);
       } catch (e) {
         setError(e.message);

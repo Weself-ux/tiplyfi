@@ -66,9 +66,12 @@ function config() {
       deviceEncryptionKey: read(STORE.deviceEncryptionKey),
       google: {
         clientId,
-        // Google returns here, so it must be the page that handles the
-        // callback — not the origin, where nothing is listening.
-        redirectUri: `${window.location.origin}/signup`,
+        // Return to whichever page started the flow, so signing in doesn't
+        // dump you on the signup form. Both paths are registered in Google
+        // Cloud Console; anything else falls back to /signup.
+        redirectUri: `${window.location.origin}${
+          window.location.pathname === "/login" ? "/login" : "/signup"
+        }`,
         selectAccountPrompt: true,
       },
     },
@@ -99,6 +102,19 @@ let devicePrep = null;
 
 export function prepareDeviceSession(sdk) {
   if (devicePrep) return devicePrep;
+
+  // Circle allows one active token per device. Requesting a second one
+  // invalidates the first, so reuse what we have rather than churning it.
+  const existing = read(STORE.deviceToken);
+  const existingKey = read(STORE.deviceEncryptionKey);
+  if (existing && existingKey) {
+    devicePrep = Promise.resolve({
+      deviceToken: existing,
+      deviceEncryptionKey: existingKey,
+    });
+    return devicePrep;
+  }
+
   devicePrep = (async () => {
     const deviceId = await ensureDeviceId(sdk);
     if (!deviceId) throw new Error("No device id returned by the SDK.");
@@ -128,6 +144,10 @@ export function prepareDeviceSession(sdk) {
 
 /// Hands the page to Google. Does not return.
 export async function startGoogleLogin(sdk) {
+  // A fresh token for a fresh attempt: a stale one from an abandoned login
+  // fails Circle's callback check.
+  clearDeviceSession();
+  devicePrep = null;
   await prepareDeviceSession(sdk);
   write(STORE.pending, "1");
 
@@ -163,6 +183,13 @@ export function clearDeviceSession() {
   clear(STORE.deviceToken);
   clear(STORE.deviceEncryptionKey);
   clear(STORE.pending);
+  devicePrep = null;
+}
+
+/// True when the page is handling Google's response. Prefetching a device
+/// token now would invalidate the one Circle is about to validate.
+export function isOauthReturn() {
+  return /[#&](id_token|access_token|error)=/.test(window.location.hash || "");
 }
 
 /// Fetches live Circle credentials from the server, refreshing them if the

@@ -5,6 +5,7 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import {
   initSdk,
   startGoogleLogin,
+  isOauthReturn,
   prepareDeviceSession,
   executeChallenge,
   isLoginPending,
@@ -104,7 +105,9 @@ export default function SignupPage() {
         sdkRef.current = sdk;
         // Warm the device session while the page is being read, so the click
         // only has to redirect.
-        prepareDeviceSession(sdk).catch(() => {});
+        // Never while Google's response is being processed — a new token
+        // would invalidate the one it's being checked against.
+        if (!isOauthReturn()) prepareDeviceSession(sdk).catch(() => {});
         // A pending flag means we have just come back from Google and the
         // callback is about to fire — keep the spinner up until it does.
         if (isLoginPending()) {
