@@ -8,7 +8,6 @@ export default [
   route('howitworks', './howitworks/page.jsx'),
   route('settings', './settings/page.jsx'),
   route('profile', './profile/page.jsx'),
-  route('tip/:username', './tip/[username]/page.jsx'),
   route('api/auth/me', './api/auth/me/route.js'),
   route('api/auth/circle/device', './api/auth/circle/device/route.js'),
   route('api/auth/circle/login', './api/auth/circle/login/route.js'),

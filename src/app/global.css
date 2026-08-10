@@ -146,12 +146,13 @@
     z-index: -2;
     pointer-events: none;
     background:
-      radial-gradient(48rem 30rem at 4% -8%,  rgba(124, 58, 237, 0.17), transparent 62%),
-      radial-gradient(42rem 27rem at 96% 1%,  rgba(59, 130, 246, 0.16), transparent 60%),
-      radial-gradient(34rem 24rem at 80% 38%, rgba(45, 212, 167, 0.12), transparent 62%),
-      radial-gradient(36rem 26rem at 8% 55%,  rgba(236, 72, 153, 0.09), transparent 62%),
-      radial-gradient(32rem 22rem at 62% 82%, rgba(251, 146, 60, 0.08), transparent 60%),
-      radial-gradient(30rem 24rem at 22% 96%, rgba(34, 211, 238, 0.09), transparent 62%);
+      radial-gradient(52rem 34rem at 2% -10%,  rgba(124, 58, 237, 0.34), transparent 64%),
+      radial-gradient(46rem 30rem at 98% -2%,  rgba(59, 130, 246, 0.32), transparent 62%),
+      radial-gradient(38rem 27rem at 84% 34%,  rgba(45, 212, 167, 0.24), transparent 64%),
+      radial-gradient(40rem 29rem at 4% 52%,   rgba(236, 72, 153, 0.19), transparent 64%),
+      radial-gradient(36rem 25rem at 64% 80%,  rgba(251, 146, 60, 0.17), transparent 62%),
+      radial-gradient(34rem 27rem at 18% 98%,  rgba(34, 211, 238, 0.19), transparent 64%),
+      radial-gradient(30rem 22rem at 50% 20%,  rgba(167, 139, 250, 0.14), transparent 66%);
   }
   /* Dots rather than lines: softer on light, and it reads as paper grain. */
   .page-light::after {
@@ -160,15 +161,20 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image: radial-gradient(circle, rgba(17, 24, 39, 0.075) 1px, transparent 1px);
-    background-size: 26px 26px;
-    -webkit-mask-image: radial-gradient(ellipse 85% 65% at 50% -5%, #000 8%, transparent 68%);
-    mask-image: radial-gradient(ellipse 85% 65% at 50% -5%, #000 8%, transparent 68%);
+    background-image: radial-gradient(circle, rgba(17, 24, 39, 0.13) 1px, transparent 1px);
+    background-size: 24px 24px;
+    -webkit-mask-image: radial-gradient(ellipse 95% 80% at 50% -5%, #000 14%, transparent 82%);
+    mask-image: radial-gradient(ellipse 95% 80% at 50% -5%, #000 14%, transparent 82%);
+  }
+  /* A slow drift keeps the mesh from reading as a static screenshot. */
+  @media (prefers-reduced-motion: no-preference) {
+    .page-light::before { animation: meshDrift 34s ease-in-out infinite alternate; }
+  }
   }
 
   .card {
     /* Slightly translucent so the mesh reads through — glass, on light. */
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(16px) saturate(150%);
     -webkit-backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid rgba(17, 24, 39, 0.07);
@@ -178,7 +184,7 @@
   }
 
   .stat {
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(16px) saturate(150%);
     -webkit-backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid rgba(17, 24, 39, 0.07);
@@ -230,7 +236,7 @@
     transition: transform 0.4s var(--ease-out-expo);
     transform: translate(calc(var(--mx, 0) * 1px), calc(var(--my, 0) * 1px));
   }
-}
+
 
 @layer utilities {
   .text-settle { color: var(--settle); }
@@ -270,6 +276,10 @@
 }
 @keyframes fade {
   to { opacity: 1; }
+}
+@keyframes meshDrift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-1.5%, 1.5%, 0) scale(1.06); }
 }
 @keyframes revealLine {
   to { clip-path: inset(-20% -10% -20% 0); }
