@@ -96,6 +96,33 @@ export async function refreshUserToken(userToken, refreshToken) {
   };
 }
 
+/// Creates a transfer challenge. Nothing moves until the user approves it in
+/// Circle's confirmation UI — the wallet is theirs, not ours.
+export async function createTransferChallenge(
+  userToken,
+  { walletId, destinationAddress, amount, tokenId },
+) {
+  const data = await circleFetch("/user/transactions/transfer", {
+    method: "POST",
+    userToken,
+    body: {
+      idempotencyKey: uuid(),
+      walletId,
+      destinationAddress,
+      amounts: [String(amount)],
+      tokenId,
+      feeLevel: "MEDIUM",
+    },
+  });
+  return data?.data?.challengeId || null;
+}
+
+/// Token balances, used to resolve the USDC tokenId a transfer needs.
+export async function getWalletBalances(userToken, walletId) {
+  const data = await circleFetch(`/wallets/${walletId}/balances`, { userToken });
+  return data?.data?.tokenBalances || [];
+}
+
 export async function listUserWallets(userToken) {
   const data = await circleFetch("/wallets", { userToken });
   return data?.data?.wallets || [];

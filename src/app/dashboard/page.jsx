@@ -13,14 +13,11 @@ import {
   Wallet,
   LayoutDashboard,
   Loader2,
-  Lock,
   Eye,
-  EyeOff,
   History,
 } from "lucide-react";
 import useSession from "../../utils/useSession";
 import {
-  sendUsdcFromPrivateKey,
   formatAddress,
   ARC_EXPLORER,
 } from "../../utils/arc-config";
@@ -30,134 +27,158 @@ const EarningsChart = lazy(() => import("./EarningsChart"));
 function SendUSDCForm({ walletAddress, username }) {
   const [toAddress, setToAddress] = useState("");
   const [sendAmount, setSendAmount] = useState("");
-  const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState("");
+  const [sending, setSending] = useState(false);
   const [txHash, setTxHash] = useState("");
 
   async function handleSend() {
-    if (!toAddress || !sendAmount) {
-      setSendStatus("Please fill in all fields.");
+    setSendStatus("");
+    setTxHash("");
+
+    if (!/^0x[a-fA-F0-9]{40}$/.test(toAddress.trim())) {
+      setSendStatus("Enter a valid wallet address.");
       return;
     }
-    if (!/^0x[a-fA-F0-9]{40}$/.test(toAddress)) {
-      setSendStatus("Invalid wallet address.");
-      return;
-    }
-    if (isNaN(sendAmount) || Number(sendAmount) <= 0) {
+    if (!(Number(sendAmount) > 0)) {
       setSendStatus("Enter a valid amount.");
       return;
     }
-    try {
-      setSending(true);
-       const storedKey = localStorage.getItem("tipjar_private_key_" + username);
-      if (!storedKey) {
-        throw new Error(
-          "This browser doesn't have your wallet key. Open Tiplyfi in the browser you signed up with.",
-        );
-      }
-      setSendStatus("Sending USDC on Arc...");
-      const hash = await sendUsdcFromPrivateKey(
-        storedKey,
-        toAddress,
-        sendAmount,
-      );
 
-      setTxHash(hash);
-      setSendStatus("Sent successfully!");
+    setSending(true);
+    try {
+      const token = localStorage.getItem("tipjar_token");
+      setSendStatus("Preparing...");
+
+      const res = await fetch("/api/wallet/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          toAddress: toAddress.trim(),
+          amount: sendAmount,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.expired) window.location.href = "/signup";
+        throw new Error(data.detail || data.error || "Withdrawal failed.");
+      }
+
+      // Circle's own confirmation UI opens here. Nothing moves without it.
+      setSendStatus("Approve the transfer to continue...");
+      const { getCircleSession, executeChallenge, initSdk } = await import(
+        "../../utils/circleSdk"
+      );
+      const session = await getCircleSession();
+      const sdk = await initSdk(() => {});
+
+      const result = await executeChallenge(sdk, {
+        challengeId: data.challengeId,
+        userToken: session.userToken,
+        encryptionKey: session.encryptionKey,
+      });
+
+      setTxHash(result?.data?.txHash || "");
+      setSendStatus("Sent. Your balance will update shortly.");
       setToAddress("");
       setSendAmount("");
     } catch (err) {
-      setSendStatus("Error: " + err.message);
+      setSendStatus(err.message);
     } finally {
       setSending(false);
     }
   }
 
-  const isSuccess = sendStatus === "Sent successfully!";
-
   return (
-    <div className="space-y-3">
-      <div>
-        <label className="block text-xs font-medium text-[#6B7280] mb-1.5 uppercase tracking-wider">
-          Recipient Address
-        </label>
-        <input
-          type="text"
-          value={toAddress}
-          onChange={(e) => {
-            setToAddress(e.target.value);
-            setSendStatus("");
-          }}
-          placeholder="0x..."
-          className="w-full px-3 py-2.5 text-sm text-[#111827] bg-white border border-[#E5E7EB] rounded-lg outline-none focus:ring-2 focus:ring-[#7c3aed] focus:ring-offset-2 transition-all"
-        />
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-[#6B7280] mb-1.5 uppercase tracking-wider">
-          Amount (USDC)
-        </label>
-        <input
-          type="text"
-          value={sendAmount}
-          onChange={(e) => {
-            setSendAmount(e.target.value);
-            setSendStatus("");
-          }}
-          placeholder="0.00"
-          className="w-full px-3 py-2.5 text-sm text-[#111827] bg-white border border-[#E5E7EB] rounded-lg outline-none focus:ring-2 focus:ring-[#7c3aed] focus:ring-offset-2 transition-all"
-        />
-      </div>
+    <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <h3 className="text-base font-semibold text-[#111827] mb-1">
+        Withdraw USDC
+      </h3>
+      <p className="text-sm text-[#6B7280] mb-4">
+        Send to any wallet address on Arc. You'll approve it before it sends.
+      </p>
+
+      <label className="block text-xs font-medium text-[#6B7280] mb-1.5 uppercase tracking-wider">
+        To address
+      </label>
+      <input
+        type="text"
+        value={toAddress}
+        onChange={(e) => {
+          setToAddress(e.target.value);
+          setSendStatus("");
+        }}
+        placeholder="0x..."
+        className="w-full px-3 py-2.5 text-sm text-[#111827] bg-white border border-[#E5E7EB] rounded-xl outline-none focus:ring-2 focus:ring-[#7c3aed] mb-4"
+      />
+
+      <label className="block text-xs font-medium text-[#6B7280] mb-1.5 uppercase tracking-wider">
+        Amount (USDC)
+      </label>
+      <input
+        type="number"
+        value={sendAmount}
+        onChange={(e) => {
+          setSendAmount(e.target.value);
+          setSendStatus("");
+        }}
+        placeholder="0.00"
+        min="0"
+        step="0.01"
+        className="w-full px-3 py-2.5 text-sm text-[#111827] bg-white border border-[#E5E7EB] rounded-xl outline-none focus:ring-2 focus:ring-[#7c3aed] mb-4"
+      />
+
       {sendStatus && (
-        <div
-          className={`px-3 py-2.5 text-sm rounded-lg border ${isSuccess ? "text-green-700 bg-green-50 border-green-200" : "text-red-700 bg-red-50 border-red-200"}`}
-        >
+        <p className="text-sm text-[#374151] bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-3 mb-4 break-words">
           {sendStatus}
-        </div>
+        </p>
       )}
+
       {txHash && (
-        <a
-          href={`${ARC_EXPLORER}/tx/${txHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-sm text-[#7c3aed] hover:text-[#6d28d9]"
+        <button
+          onClick={() =>
+            window.open(
+              `${ARC_EXPLORER}/tx/${txHash}`,
+              "_blank",
+              "noopener,noreferrer",
+            )
+          }
+          className="text-sm text-[#7c3aed] font-medium hover:text-[#6d28d9] mb-4 block"
         >
-          View on Arc Explorer <ExternalLink size={12} />
-        </a>
+          View on Arc Explorer →
+        </button>
       )}
+
       <button
         onClick={handleSend}
         disabled={sending}
-        className="w-full py-2.5 text-sm font-semibold text-white bg-[#7c3aed] rounded-lg hover:bg-[#6d28d9] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+        className="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-[#7c3aed] to-[#3b82f6] rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
       >
-        {sending ? (
-          <>
-            <Loader2 size={16} className="animate-spin" /> Sending...
-          </>
-        ) : (
-          <>
-            <Send size={16} /> Send USDC
-          </>
-        )}
+        {sending ? "Working..." : "Withdraw"}
       </button>
+
+      <div className="mt-5 pt-4 border-t border-[#F3F4F6]">
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm text-[#9CA3AF]">Withdraw to bank account</span>
+          <span className="text-[10px] font-semibold text-[#6B7280] bg-[#F3F4F6] px-2 py-1 rounded uppercase tracking-wider">
+            Soon
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const { user, loading: sessionLoading, logout, getToken } = useSession();
+  const { user, loading: sessionLoading, logout } = useSession();
   const [activeTab, setActiveTab] = useState("overview");
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [copied, setCopied] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
-  const [showKeyPrompt, setShowKeyPrompt] = useState(false);
-  const [keyPassword, setKeyPassword] = useState("");
-  const [keyError, setKeyError] = useState("");
-  const [keyChecking, setKeyChecking] = useState(false);
-  const [revealedKey, setRevealedKey] = useState(null);
-  const [copiedKey, setCopiedKey] = useState(false);
-  const [showKeyText, setShowKeyText] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Redirect if not logged in
@@ -253,56 +274,6 @@ export default function Dashboard() {
     navigator.clipboard.writeText(user.walletAddress);
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2000);
-  }
-
-  async function verifyPasswordAndRevealKey() {
-    if (!keyPassword) {
-      setKeyError("Please enter your password.");
-      return;
-    }
-    setKeyChecking(true);
-    setKeyError("");
-    try {
-      const res = await fetch("/api/auth/verify-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({ password: keyPassword }),
-      });
-      if (!res.ok) {
-        setKeyError("Incorrect password.");
-        return;
-      }
-      const stored = localStorage.getItem(
-        "Tiplyfi_private_key_" + user.username,
-      );
-      if (!stored) {
-        setKeyError(
-          "No private key found on this device. This wallet may have been connected via MetaMask, or you're viewing this on a different device than the one used to sign up.",
-        );
-        return;
-      }
-      setRevealedKey(stored);
-      setShowKeyPrompt(false);
-      setKeyPassword("");
-    } catch {
-      setKeyError("Something went wrong. Please try again.");
-    } finally {
-      setKeyChecking(false);
-    }
-  }
-
-  function hidePrivateKey() {
-    setRevealedKey(null);
-    setShowKeyText(false);
-  }
-
-  function copyPrivateKey() {
-    navigator.clipboard.writeText(revealedKey);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
   }
 
   function handleLogout() {
@@ -857,104 +828,6 @@ export default function Dashboard() {
               >
                 View on Arc Explorer <ExternalLink size={14} />
               </a>
-            </div>
-
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
-              <h3 className="text-base font-semibold text-[#111827] mb-1 flex items-center gap-2">
-                <Lock size={16} className="text-[#6B7280]" />
-                Private Key
-              </h3>
-              <p className="text-sm text-[#6B7280] mb-4">
-                Anyone with this key has full control of your wallet. Keep it secret.
-              </p>
-
-              {!revealedKey && (
-                <button
-                  onClick={() => {
-                    setShowKeyPrompt(true);
-                    setKeyError("");
-                    setKeyPassword("");
-                  }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#111827] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
-                >
-                  <Eye size={14} /> Reveal Private Key
-                </button>
-              )}
-
-              {showKeyPrompt && !revealedKey && (
-                <div className="mt-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
-                  <p className="text-sm text-[#111827] font-medium mb-2">
-                    Confirm your account password
-                  </p>
-                  <input
-                    type="password"
-                    value={keyPassword}
-                    onChange={(e) => {
-                      setKeyPassword(e.target.value);
-                      setKeyError("");
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") verifyPasswordAndRevealKey();
-                    }}
-                    placeholder="Your account password"
-                    className="w-full px-3 py-2.5 text-sm text-[#111827] bg-white border border-[#E5E7EB] rounded-lg outline-none focus:ring-2 focus:ring-[#7c3aed] focus:ring-offset-2 transition-all mb-2"
-                  />
-                  {keyError && (
-                    <p className="text-sm text-red-600 mb-2">{keyError}</p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={verifyPasswordAndRevealKey}
-                      disabled={keyChecking}
-                      className="px-4 py-2 text-sm font-semibold text-white bg-[#7c3aed] rounded-lg hover:bg-[#6d28d9] disabled:opacity-50"
-                    >
-                      {keyChecking ? "Checking..." : "Confirm"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowKeyPrompt(false);
-                        setKeyPassword("");
-                        setKeyError("");
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#111827]"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {revealedKey && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-3 bg-[#FEF2F2] border border-red-200 rounded-lg px-4 py-3 mb-3">
-                    <code className="flex-1 text-sm text-[#111827] break-all">
-                      {showKeyText
-                        ? revealedKey
-                        : "•".repeat(Math.min(revealedKey.length, 50))}
-                    </code>
-                    <button
-                      onClick={() => setShowKeyText(!showKeyText)}
-                      className="text-[#6B7280] hover:text-[#111827] flex-shrink-0"
-                    >
-                      {showKeyText ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={copyPrivateKey}
-                      className="px-3 py-1.5 text-xs font-semibold text-white bg-[#7c3aed] rounded-lg hover:bg-[#6d28d9]"
-                    >
-                      {copiedKey ? "Copied!" : "Copy Key"}
-                    </button>
-                    <button
-                      onClick={hidePrivateKey}
-                      className="px-3 py-1.5 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
-                    >
-                      Hide
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">

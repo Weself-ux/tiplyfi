@@ -150,6 +150,23 @@ export function clearDeviceSession() {
   clear(STORE.pending);
 }
 
+/// Fetches live Circle credentials from the server, refreshing them if the
+/// 14-day window is nearly up. Tokens live in httpOnly cookies, so the
+/// browser never holds them directly.
+export async function getCircleSession() {
+  const token = localStorage.getItem("tipjar_token");
+  const res = await fetch("/api/auth/circle/session", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const err = new Error(data.error || "Wallet session expired.");
+    err.expired = Boolean(data.expired);
+    throw err;
+  }
+  return data;
+}
+
 /// Runs a challenge — PIN setup, wallet creation, signing.
 export function executeChallenge(sdk, { challengeId, userToken, encryptionKey }) {
   sdk.setAuthentication({ userToken, encryptionKey });

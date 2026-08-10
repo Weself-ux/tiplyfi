@@ -38,6 +38,7 @@ export default [
   route('api/user/profile', './api/user/profile/route.js'),
   route('api/user/:username', './api/user/[username]/route.js'),
   route('api/wallet/balance', './api/wallet/balance/route.js'),
+  route('api/wallet/withdraw', './api/wallet/withdraw/route.js'),
   route('api/wallet/transactions', './api/wallet/transactions/route.js'),
   // Must sit last before the catch-all: every fixed route wins over a
   // username, and reserved_handles blocks anyone claiming one.
