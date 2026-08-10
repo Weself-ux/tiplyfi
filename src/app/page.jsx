@@ -80,7 +80,18 @@ export default function LandingPage() {
     <Atmosphere>
       {/* ── Nav ─────────────────────────────────────────────────── */}
       <nav className="max-w-[1180px] mx-auto px-6 h-20 flex items-center justify-between fade" style={{ "--d": "0.1s" }}>
-        <Logo size={30} showWord className="text-white" />
+        <div className="flex items-center gap-4">
+          <Logo size={30} showWord className="text-white" />
+          <span className="hidden sm:flex items-center gap-1.5 glass rounded-full px-3 py-1">
+            <span
+              className="w-1.5 h-1.5 rounded-full settle-pulse"
+              style={{ background: "var(--settle)" }}
+            />
+            <span className="font-mono-t text-[10px] text-settle">
+              Live on Arc Testnet
+            </span>
+          </span>
+        </div>
         <div className="flex items-center gap-7">
           <button
             onClick={() => (window.location.href = "/howitworks")}
@@ -368,7 +379,7 @@ export default function LandingPage() {
             {
               n: "02",
               t: "Share it anywhere",
-              d: "X, YouTube, TikTok, Discord, your stream overlay, your bio. Supporters need no account to send you money.",
+              d: "X, YouTube, TikTok, Discord, your stream overlay, your bio. Supporters open it, pick an amount, and send — no account, no signup, no app.",
             },
             {
               n: "03",
@@ -448,7 +459,10 @@ export default function LandingPage() {
           Your link is waiting.
         </h2>
         <p className="text-[var(--muted)] mt-5 max-w-[420px] mx-auto">
-          Takes under a minute. Free to start, free to keep.
+          Set up in two minutes. Free to start, free to keep.
+        </p>
+        <p className="font-mono-t text-[11px] text-[rgba(139,138,165,0.6)] mt-3">
+          Wallets powered by Circle
         </p>
         <div ref={magnetRef} className="magnetic inline-block mt-9">
           <button
@@ -461,10 +475,22 @@ export default function LandingPage() {
       </Section>
 
       <footer className="border-t border-[var(--line)] mt-10">
-        <div className="max-w-[1180px] mx-auto px-6 py-10">
-          <div className="flex flex-wrap items-center justify-between gap-6">
+        <div className="max-w-[1180px] mx-auto px-6 py-10 flex flex-wrap justify-between gap-y-8">
+          <div>
             <Logo size={28} showWord className="text-white" />
-            <div className="flex flex-wrap items-center gap-7">
+            <div className="flex items-center gap-2 mt-3">
+              <span
+                className="w-1.5 h-1.5 rounded-full settle-pulse"
+                style={{ background: "var(--settle)" }}
+              />
+              <span className="font-mono-t text-[11px] text-settle">
+                Live on Arc Testnet
+              </span>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <div className="flex flex-wrap items-center justify-end gap-7">
               <button
                 onClick={() => (window.location.href = "/howitworks")}
                 className="text-sm text-[var(--muted)] hover:text-white transition-colors"
@@ -484,18 +510,9 @@ export default function LandingPage() {
                 Get your link
               </button>
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--line)]">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--settle)] settle-pulse" />
-              <span className="font-mono-t text-[11px] text-settle">
-                Live on Arc Testnet
-              </span>
-            </div>
-            <span className="font-mono-t text-[11px] text-[rgba(139,138,165,0.6)]">
+            <p className="font-mono-t text-[11px] text-[rgba(139,138,165,0.6)] mt-3">
               Built on Arc &amp; Circle
-            </span>
+            </p>
           </div>
         </div>
       </footer>

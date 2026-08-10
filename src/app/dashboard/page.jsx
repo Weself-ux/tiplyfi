@@ -266,7 +266,7 @@ export default function Dashboard() {
   });
 
   function copyLink() {
-    const link = window.location.origin + "/tip/" + user.username;
+    const link = window.location.origin + "/" + user.username;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
