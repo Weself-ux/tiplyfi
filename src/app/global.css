@@ -129,43 +129,48 @@
 
   /* ── Light surfaces: dashboard, settings, profile ───────────── */
 
-  /* Not a flat grey. Two faint washes keep the light pages in the same
-     family as the dark ones without hurting readability. */
+  /* Mesh of six radials over near-white. Violet and azure carry the brand,
+     mint ties back to the settle colour, and rose/amber/cyan keep it from
+     reading as a two-colour gradient. All low opacity — this sits behind
+     financial data and must never compete with it. */
   .page-light {
     position: relative;
     min-height: 100vh;
-    background:
-      radial-gradient(ellipse 90% 55% at 8% -12%, rgba(124, 58, 237, 0.11), transparent 60%),
-      radial-gradient(ellipse 70% 50% at 96% -4%, rgba(59, 130, 246, 0.09), transparent 60%),
-      radial-gradient(ellipse 60% 40% at 50% 108%, rgba(45, 212, 167, 0.05), transparent 62%),
-      var(--paper);
+    background: #FBFAFE;
+    isolation: isolate;
   }
-  /* The same grid the dark pages use, at light-surface weight. Keeps the two
-     halves of the product in one family instead of two. */
   .page-light::before {
     content: '';
     position: fixed;
     inset: 0;
+    z-index: -2;
     pointer-events: none;
-    background-image:
-      linear-gradient(rgba(17, 24, 39, 0.028) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(17, 24, 39, 0.028) 1px, transparent 1px);
-    background-size: 64px 64px;
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 10%, transparent 72%);
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 10%, transparent 72%);
+    background:
+      radial-gradient(48rem 30rem at 4% -8%,  rgba(124, 58, 237, 0.17), transparent 62%),
+      radial-gradient(42rem 27rem at 96% 1%,  rgba(59, 130, 246, 0.16), transparent 60%),
+      radial-gradient(34rem 24rem at 80% 38%, rgba(45, 212, 167, 0.12), transparent 62%),
+      radial-gradient(36rem 26rem at 8% 55%,  rgba(236, 72, 153, 0.09), transparent 62%),
+      radial-gradient(32rem 22rem at 62% 82%, rgba(251, 146, 60, 0.08), transparent 60%),
+      radial-gradient(30rem 24rem at 22% 96%, rgba(34, 211, 238, 0.09), transparent 62%);
   }
-  .page-light > * { position: relative; }
-
-  /* Shared glass nav for the light surfaces. */
-  .nav-light {
-    background: rgba(250, 250, 252, 0.78);
-    backdrop-filter: blur(18px) saturate(170%);
-    -webkit-backdrop-filter: blur(18px) saturate(170%);
-    border-bottom: 1px solid rgba(17, 24, 39, 0.07);
+  /* Dots rather than lines: softer on light, and it reads as paper grain. */
+  .page-light::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(17, 24, 39, 0.075) 1px, transparent 1px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(ellipse 85% 65% at 50% -5%, #000 8%, transparent 68%);
+    mask-image: radial-gradient(ellipse 85% 65% at 50% -5%, #000 8%, transparent 68%);
   }
 
   .card {
-    background: #fff;
+    /* Slightly translucent so the mesh reads through — glass, on light. */
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid rgba(17, 24, 39, 0.07);
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04),
@@ -173,7 +178,9 @@
   }
 
   .stat {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid rgba(17, 24, 39, 0.07);
     border-radius: 16px;
     padding: 20px 22px;

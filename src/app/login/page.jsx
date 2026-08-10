@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { initSdk, startGoogleLogin } from "../../utils/circleSdk";
+import Atmosphere from "../../utils/Atmosphere";
+import Logo from "../../utils/Logo";
 
 export default function LoginPage() {
   const [ready, setReady] = useState(false);
@@ -39,42 +41,59 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5F3FF] via-white to-[#EFF6FF] font-inter flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm w-full max-w-[400px] p-8">
-        <h1 className="text-2xl font-bold text-[#111827] mb-1">Welcome back</h1>
-        <p className="text-sm text-[#6B7280] mb-7">
-          Sign in to your Tiplyfi account.
-        </p>
-
-        {error && (
-          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 break-words">
-            {error}
-          </p>
-        )}
-
+    <Atmosphere>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
         <button
-          onClick={handleGoogle}
-          disabled={!ready || busy}
-          className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-[#111827] border border-[#E5E7EB] rounded-xl hover:border-[#C4B5FD] hover:bg-[#FAFAFA] disabled:opacity-50 transition-colors"
+          onClick={() => (window.location.href = "/")}
+          className="mb-8 rise"
+          style={{ "--d": "0.05s" }}
         >
-          {busy || !ready ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <span className="text-base font-bold">G</span>
-          )}
-          Continue with Google
+          <Logo size={30} showWord className="text-white" />
         </button>
 
-        <p className="text-xs text-[#9CA3AF] text-center mt-6">
-          New to Tiplyfi?{" "}
+        <div
+          className="glass glass-lit rounded-[26px] w-full max-w-[400px] p-8 rise"
+          style={{ "--d": "0.15s", boxShadow: "0 50px 110px -45px rgba(0,0,0,0.95)" }}
+        >
+          <h1 className="display-lg text-white text-[26px] mb-2">Welcome back</h1>
+          <p className="text-sm text-[var(--muted)] mb-7">
+            Sign in to your Tiplyfi account.
+          </p>
+
+          {error && (
+            <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 mb-5 break-words">
+              {error}
+            </p>
+          )}
+
           <button
-            onClick={() => (window.location.href = "/signup")}
-            className="text-[#7c3aed] font-medium hover:text-[#6d28d9]"
+            onClick={handleGoogle}
+            disabled={!ready || busy}
+            className="w-full flex items-center justify-center gap-2.5 py-3.5 text-sm font-semibold text-white rounded-xl border border-[var(--line)] hover:border-[rgba(255,255,255,0.24)] hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
           >
-            Create your page
+            {busy || !ready ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <span className="text-base font-bold">G</span>
+            )}
+            Continue with Google
           </button>
+
+          <p className="text-xs text-[var(--muted)] text-center mt-7">
+            New to Tiplyfi?{" "}
+            <button
+              onClick={() => (window.location.href = "/signup")}
+              className="text-[var(--violet-lo)] font-medium hover:text-white transition-colors"
+            >
+              Create your page
+            </button>
+          </p>
+        </div>
+
+        <p className="text-xs text-[rgba(139,138,165,0.6)] mt-6">
+          Wallets powered by Circle
         </p>
       </div>
-    </div>
+    </Atmosphere>
   );
 }
