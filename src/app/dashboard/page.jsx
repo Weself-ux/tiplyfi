@@ -257,6 +257,23 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
+  // SCA transfers route through the ERC-4337 EntryPoint, so the explorer
+  // can't attribute them to this wallet — we read our own record instead.
+  const { data: withdrawalData } = useQuery({
+    queryKey: ["withdrawals", user?.username],
+    queryFn: async () => {
+      const token = localStorage.getItem("tiplyfi_token");
+      if (!token) return null;
+      const res = await fetch("/api/wallet/withdrawals", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!user?.username,
+    refetchInterval: 60000,
+  });
+
   // Escrowed tips: funds the contract held because a direct transfer failed.
   // With EOA creator wallets this should always be zero.
   const { data: escrowData } = useQuery({
@@ -1004,6 +1021,49 @@ export default function Dashboard() {
               </p>
               
               <SendUSDCForm walletAddress={user.walletAddress} username={user.username} />
+
+              {withdrawalData?.withdrawals?.length > 0 && (
+                <div className="card p-6 mt-4">
+                  <h3 className="text-base font-semibold text-[#111827] mb-4">
+                    Withdrawals
+                  </h3>
+                  {withdrawalData.withdrawals.map((w) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center justify-between py-3 border-b border-[#F3F4F6] last:border-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-mono-t text-sm text-[#111827]">
+                          {formatAddress(w.to_address)}
+                        </p>
+                        <p className="text-xs text-[#9CA3AF] mt-0.5">
+                          {formatDate(w.created_at)}
+                          {w.status !== "confirmed" && " · pending"}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-4">
+                        <p className="stat-value text-sm text-[#111827]">
+                          −{Number(w.amount_usdc).toFixed(2)}
+                        </p>
+                        {w.tx_hash && (
+                          <button
+                            onClick={() =>
+                              window.open(
+                                `${ARC_EXPLORER}/tx/${w.tx_hash}`,
+                                "_blank",
+                                "noopener,noreferrer",
+                              )
+                            }
+                            className="text-[11px] text-[#7c3aed] hover:text-[#6d28d9] transition-colors"
+                          >
+                            View
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

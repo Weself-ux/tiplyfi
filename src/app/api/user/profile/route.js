@@ -66,15 +66,6 @@ export async function action({ request }) {
     if (body.accentColor && !/^#[0-9a-fA-F]{6}$/.test(body.accentColor)) {
       return Response.json({ error: "Invalid colour." }, { status: 400 });
     }
-
-    const socials = {};
-    if (body.socialLinks && typeof body.socialLinks === "object") {
-      for (const key of SOCIAL_KEYS) {
-        const url = cleanUrl(body.socialLinks[key]);
-        if (url) socials[key] = url;
-      }
-    }
-
     if (body.displayName !== undefined) {
       const name = String(body.displayName).trim();
       if (name.length < 1 || name.length > 50) {
@@ -85,30 +76,51 @@ export async function action({ request }) {
       }
     }
 
+    // Built from the fields actually present. A fixed SET list needs a
+    // placeholder for every column, and an untyped null placeholder inside
+    // COALESCE is rejected by Postgres — which is why saving a colour alone
+    // failed while saving a bio worked.
+    const sets = [];
+    const values = [];
+    const add = (column, value) => {
+      values.push(value);
+      sets.push(`${column} = $${values.length}`);
+    };
+
+    if (body.displayName !== undefined) {
+      add("full_name", String(body.displayName).trim().slice(0, 50));
+    }
+    if (body.bio !== undefined) {
+      add("bio", String(body.bio).slice(0, 280));
+    }
+    if (body.category !== undefined) {
+      add("category", body.category || null);
+    }
+    if (body.accentColor !== undefined) {
+      add("accent_color", body.accentColor);
+    }
+    if (body.thankYouMessage !== undefined) {
+      add("thank_you_message", String(body.thankYouMessage).slice(0, 200));
+    }
+    if (body.socialLinks !== undefined) {
+      const socials = {};
+      if (body.socialLinks && typeof body.socialLinks === "object") {
+        for (const key of SOCIAL_KEYS) {
+          const url = cleanUrl(body.socialLinks[key]);
+          if (url) socials[key] = url;
+        }
+      }
+      add("social_links", JSON.stringify(socials));
+    }
+
+    if (sets.length === 0) {
+      return Response.json({ success: true });
+    }
+
+    values.push(user.id);
     await sql(
-      `UPDATE users
-          SET full_name         = COALESCE($7, full_name),
-              bio               = COALESCE($1, bio),
-              category          = COALESCE($2, category),
-              accent_color      = COALESCE($3, accent_color),
-              thank_you_message = COALESCE($4, thank_you_message),
-              social_links      = COALESCE($5::jsonb, social_links),
-        WHERE id = $6`,
-      [
-        body.bio !== undefined ? String(body.bio).slice(0, 280) : null,
-        body.category || null,
-        body.accentColor || null,
-        body.thankYouMessage !== undefined
-          ? String(body.thankYouMessage).slice(0, 200)
-          : null,
-        // Null means "not in this patch" — without it, saving a colour wipes
-        // every link the creator has set.
-        body.socialLinks === undefined ? null : JSON.stringify(socials),
-        user.id,
-        body.displayName !== undefined
-          ? String(body.displayName).trim().slice(0, 50)
-          : null,
-      ],
+      `UPDATE users SET ${sets.join(", ")} WHERE id = $${values.length}`,
+      values,
     );
 
     return Response.json({ success: true });
