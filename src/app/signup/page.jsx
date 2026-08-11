@@ -373,3 +373,11 @@ export default function SignupPage() {
     </Atmosphere>
   );
 }
+
+export function meta() {
+  return [
+    { title: "Start accepting tips — Tiplyfi" },
+    { name: "description", content: "Set up in two minutes. No crypto wallet needed." },
+    { name: "robots", content: "noindex" },
+  ];
+}

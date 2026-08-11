@@ -142,3 +142,10 @@ export default function LoginPage() {
     </Atmosphere>
   );
 }
+
+export function meta() {
+  return [
+    { title: "Sign in — Tiplyfi" },
+    { name: "robots", content: "noindex" },
+  ];
+}

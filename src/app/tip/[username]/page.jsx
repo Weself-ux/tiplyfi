@@ -35,7 +35,14 @@ export function meta({ params }) {
     { property: "og:description", content: description },
     { property: "og:url", content: url },
     { property: "og:site_name", content: "Tiplyfi" },
-    { name: "twitter:card", content: "summary" },
+    // WhatsApp renders no card at all without an image, unlike X and Discord
+    // which will show title and description alone.
+    { property: "og:image", content: "https://tiplyfi.vercel.app/og-image.png" },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { property: "og:image:alt", content: "Tiplyfi — get paid in USDC" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:image", content: "https://tiplyfi.vercel.app/og-image.png" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
   ];

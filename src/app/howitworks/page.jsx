@@ -211,3 +211,19 @@ export default function HowItWorks() {
     </Atmosphere>
   );
 }
+
+export function meta() {
+  const title = "How Tiplyfi works";
+  const description =
+    "Payments without the payment company. Your supporters send USDC straight to your wallet, and it arrives in under a second.";
+  return [
+    { title },
+    { name: "description", content: description },
+    { tagName: "link", rel: "canonical", href: "https://tiplyfi.vercel.app/howitworks" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:image", content: "https://tiplyfi.vercel.app/og-image.png" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:image", content: "https://tiplyfi.vercel.app/og-image.png" },
+  ];
+}

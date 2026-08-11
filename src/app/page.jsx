@@ -79,7 +79,11 @@ export function meta() {
     { property: "og:description", content: description },
     { property: "og:url", content: "https://tiplyfi.vercel.app/" },
     { property: "og:site_name", content: "Tiplyfi" },
-    { name: "twitter:card", content: "summary" },
+    { property: "og:image", content: "https://tiplyfi.vercel.app/og-image.png" },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:image", content: "https://tiplyfi.vercel.app/og-image.png" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
   ];
