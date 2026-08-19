@@ -295,14 +295,17 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-3 gap-5 mt-12">
           {[
             {
+              n: "01",
               t: "No withdrawal function",
               d: "The contract pays whoever signs the transaction, and that's only ever you. There is no admin path to your funds — not for us, not under pressure.",
             },
             {
+              n: "02",
               t: "The rules can't change",
               d: "It isn't upgradeable. Whatever the contract does today is what it will still do in five years, regardless of who runs Tiplyfi.",
             },
             {
+              n: "03",
               t: "The fee is capped in code",
               d: "6% today, and a hard ceiling of 10% compiled into the bytecode. We can lower it. We can never raise it past that.",
             },

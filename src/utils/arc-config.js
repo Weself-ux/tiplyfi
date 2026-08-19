@@ -53,7 +53,7 @@ function ceilToScale(wei) {
 }
 
 /// @param fanCoversFee   fan pays the fee on top instead of it coming out
-/// @param addPlatformTip fan's voluntary gift to Tiplyfi, equal to the fee
+/// @param addPlatformTip fan's voluntary 2% gift to Tiplyfi, separate from the fee
 export function computeTipAmounts(amount, fanCoversFee, addPlatformTip = false) {
   const base = snapToCent(usdcToWei(amount));
   const feeWei = ceilToScale((base * FEE_BPS) / BPS);
@@ -295,18 +295,6 @@ export async function sendUsdc(toAddress, amountUsdc, provider) {
   });
 
   return txHash;
-}
-
-// ─── Send USDC from a Tiplyfi-generated wallet (private key in localStorage) ─
-export async function sendUsdcFromPrivateKey(privateKey, toAddress, amountUsdc) {
-  const { ethers } = await import("ethers");
-  const rpcProvider = new ethers.JsonRpcProvider(ARC_TESTNET.rpcUrls[0]);
-  const wallet = new ethers.Wallet(privateKey, rpcProvider);
-  const tx = await wallet.sendTransaction({
-    to: toAddress,
-    value: ethers.parseEther(amountUsdc.toString()),
-  });
-  return tx.hash;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
