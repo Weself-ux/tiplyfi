@@ -3,7 +3,6 @@ import { track } from "../../../utils/track";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ExternalLink, Loader2, Wallet, X, Zap } from "lucide-react";
 import {
-  sendUsdc,
   formatAddress,
   ARC_EXPLORER,
   computeTipAmounts,
@@ -228,19 +227,24 @@ export default function TipPage({ params }) {
         console.warn("[tiplyfi] prepare failed", prepErr);
       }
 
+      // Never fall back to a direct transfer. It would pay no fee, emit no
+      // Tipped event, and leave the creator's dashboard empty.
+      if (!routed) {
+        console.error("[tiplyfi] no router address; refusing to send");
+        throw new Error("Tipping is temporarily unavailable. Nothing was sent.");
+      }
+
       setStatus("Confirm in your wallet...");
       track("tip_started", { amount: Number(netUsdc) }, username);
-      const hash = routed
-        ? await tipViaRouter({
-            creatorAddress: creator.walletAddress,
-            routerAddress,
-            platformTipWei: amounts.platformTipWei,
-            valueWei: amounts.valueWei,
-            feeWei: amounts.feeWei,
-            message: message || null,
-            provider: wallet.provider,
-          })
-        : await sendUsdc(creator.walletAddress, finalAmount, wallet.provider);
+      const hash = await tipViaRouter({
+        creatorAddress: creator.walletAddress,
+        routerAddress,
+        platformTipWei: amounts.platformTipWei,
+        valueWei: amounts.valueWei,
+        feeWei: amounts.feeWei,
+        message: message || null,
+        provider: wallet.provider,
+      });
       setTxHash(hash);
 
       await confirmTip({ tipId, clientRef, txHash: hash });
@@ -565,6 +569,27 @@ export default function TipPage({ params }) {
                   className="text-[11px] text-[var(--muted)] hover:text-white transition-colors"
                 >
                   Disconnect
+                </button>
+              </div>
+            )}
+
+                        {mode === "wallet" && wallet && (
+              <div className="mb-4 -mt-2 flex items-center justify-between px-1">
+                <span className="text-[11px] text-[var(--muted)]">
+                  On Arc Testnet. Need USDC to tip?
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      "https://faucet.circle.com",
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
+                  className="text-[11px] text-[var(--settle)] hover:underline"
+                >
+                  Get testnet USDC
                 </button>
               </div>
             )}

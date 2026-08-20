@@ -187,6 +187,7 @@ export async function loader({ request }) {
       behind: head - cursor,
       processed,
       rpcLimited,
+      rpc: new URL(ARC_CONFIG.rpcUrl).host,
       errors: errors.slice(0, 5),
     });
   } catch (err) {
