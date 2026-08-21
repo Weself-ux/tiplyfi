@@ -86,79 +86,82 @@ export async function loader({ request }) {
       for (const log of logs) {
         try {
           const topic = log.topics?.[0];
+          const logIndex = parseInt(log.logIndex, 16);
+          const ref = `${log.transactionHash}:${logIndex}`;
 
           if (topic === TOPIC_TIPPED) {
             const creator = addrFromTopic(log.topics[1]);
             const tipper = addrFromTopic(log.topics[2]);
-            const gross = weiToNumber(word(log.data, 0));
-            const net = weiToNumber(word(log.data, 1));
-            const fee = weiToNumber(word(log.data, 2));
+            const gross = weiToDecimal(word(log.data, 0));
+            const net = weiToDecimal(word(log.data, 1));
+            const fee = weiToDecimal(word(log.data, 2));
 
-            // Already recorded by the confirm endpoint? Nothing to do.
+            // Already recorded, by this exact (tx, log)? Nothing to do.
             const existing = await sql(
-              "SELECT id FROM tips WHERE tx_hash = $1",
-              [log.transactionHash],
+              "SELECT id FROM tips WHERE tx_hash = $1 AND log_index = $2",
+              [log.transactionHash, logIndex],
             );
-            if (existing.length > 0) continue;
+            if (existing.length > 0) {
+              processed++;
+              continue;
+            }
 
-            // Match a pending row first so the fan's message is preserved.
+            // Match a pending row first so the fan's message is preserved. Only
+            // rows with no log_index yet, so a second tip in the same tx cannot
+            // steal the first tip's pending row.
             const matched = await sql(
               `UPDATE tips
-                  SET tx_hash = $1::text, status = 'confirmed'
+                  SET tx_hash = $1::text, log_index = $2, status = 'confirmed'
                 WHERE tx_hash IS NULL
                   AND status = 'pending'
-                  AND lower(creator_address) = $2::text
-                  AND abs(coalesce(gross_usdc, amount_usdc) - $3::numeric) < 0.000001
+                  AND lower(creator_address) = $3::text
+                  AND abs(coalesce(gross_usdc, amount_usdc) - $4::numeric) < 0.000001
                 RETURNING id`,
-              [log.transactionHash, creator, gross],
+              [log.transactionHash, logIndex, creator, gross],
             );
 
-            if (matched.length === 0) {
-              // Unmatched: the chain is the source of truth, so record it.
-              const owner = await sql(
-                "SELECT username FROM users WHERE lower(wallet_address) = $1",
-                [creator],
-              );
-              if (owner.length > 0) {
-                await sql(
-                  `INSERT INTO tips (creator_username, creator_address, tipper_address,
-                     amount, amount_usdc, gross_usdc, fee_usdc, tx_hash, status)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'confirmed')
-                   ON CONFLICT (tx_hash) DO NOTHING`,
-                  [
-                    owner[0].username.toLowerCase(),
-                    creator,
-                    tipper,
-                    String(net),
-                    net,
-                    gross,
-                    fee,
-                    log.transactionHash,
-                  ],
-                );
-              }
-            }
-            
             const owner = await sql(
-            "SELECT username FROM users WHERE lower(wallet_address) = $1",
-            [creator],
-          );
-          if (owner.length > 0) {
-            await recordTipEvents({
-              creatorUsername: owner[0].username,
-              tipperAddress: tipper,
-              netUsdc: net,
-              platformTipUsdc: 0,
-              txHash: log.transactionHash,
-            });
-          }
-          processed++;
-        }
+              "SELECT username FROM users WHERE lower(wallet_address) = $1",
+              [creator],
+            );
 
-        if (topic === TOPIC_ESCROWED) {
+            if (matched.length === 0 && owner.length > 0) {
+              // Unmatched: the chain is the source of truth, so record it.
+              await sql(
+                `INSERT INTO tips (creator_username, creator_address, tipper_address,
+                   amount, amount_usdc, gross_usdc, fee_usdc, tx_hash, log_index, status)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'confirmed')
+                 ON CONFLICT (tx_hash, log_index) DO NOTHING`,
+                [
+                  owner[0].username.toLowerCase(),
+                  creator,
+                  tipper,
+                  net,
+                  net,
+                  gross,
+                  fee,
+                  log.transactionHash,
+                  logIndex,
+                ],
+              );
+            }
+
+            if (owner.length > 0) {
+              await recordTipEvents({
+                creatorUsername: owner[0].username,
+                tipperAddress: tipper,
+                netUsdc: net,
+                platformTipUsdc: 0,
+                txHash: ref,
+              });
+            }
+            processed++;
+          }
+
+          if (topic === TOPIC_ESCROWED) {
             await sql(
-              "UPDATE tips SET payout_status = 'escrowed' WHERE tx_hash = $1",
-              [log.transactionHash],
+              "UPDATE tips SET payout_status = 'escrowed' WHERE tx_hash = $1 AND log_index = $2",
+              [log.transactionHash, logIndex],
             );
             processed++;
           }

@@ -244,7 +244,21 @@ export async function connectWallet(walletId) {
     );
   }
 
-  await provider.request({ method: "eth_requestAccounts" });
+  // wallet_requestPermissions forces the account picker open every time, so a
+  // user can switch accounts or wallets. eth_requestAccounts alone silently
+  // reuses the first authorized account and can never be changed.
+  try {
+    await provider.request({
+      method: "wallet_requestPermissions",
+      params: [{ eth_accounts: {} }],
+    });
+  } catch (permErr) {
+    if (permErr.code !== 4001) {
+      await provider.request({ method: "eth_requestAccounts" });
+    } else {
+      throw permErr;
+    }
+  }
 
   try {
     await provider.request({
@@ -264,7 +278,7 @@ export async function connectWallet(walletId) {
     }
   }
 
-  const accounts = await provider.request({ method: "eth_accounts" });
+  const accounts = await provider.request({ method: "eth_requestAccounts" });
   if (!accounts || accounts.length === 0) throw new Error("No accounts found.");
   return { address: accounts[0], provider, walletId };
 }
