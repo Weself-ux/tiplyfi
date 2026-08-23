@@ -233,6 +233,23 @@ export const SUPPORTED_WALLETS = [
 ];
 
 // ─── Connect a specific wallet and switch to Arc Testnet ─────────────────────
+// Revokes the site's account permission so the next connect is a true
+// first-connect and the wallet reopens its account picker. Not all wallets
+// support wallet_revokePermissions; swallow when they don't.
+export async function disconnectWallet(walletId) {
+  const wallet = SUPPORTED_WALLETS.find((w) => w.id === walletId);
+  const provider = wallet?.getProvider?.();
+  if (!provider) return;
+  try {
+    await provider.request({
+      method: "wallet_revokePermissions",
+      params: [{ eth_accounts: {} }],
+    });
+  } catch {
+    // Wallet doesn't support revoke; nothing to clean up on their side.
+  }
+}
+
 export async function connectWallet(walletId) {
   const wallet = SUPPORTED_WALLETS.find((w) => w.id === walletId);
   if (!wallet) throw new Error("Wallet not found.");

@@ -5,6 +5,7 @@ import { Check, ExternalLink, Loader2, Wallet, X, Zap } from "lucide-react";
 import {
   formatAddress,
   ARC_EXPLORER,
+  disconnectWallet,
   computeTipAmounts,
   tipViaRouter,
   weiToDisplay,
@@ -565,7 +566,10 @@ export default function TipPage({ params }) {
                   </span>
                 </div>
                 <button
-                  onClick={() => setWallet(null)}
+                  onClick={async () => {
+                    if (wallet?.walletId) await disconnectWallet(wallet.walletId);
+                    setWallet(null);
+                  }}
                   className="text-[11px] text-[var(--muted)] hover:text-white transition-colors"
                 >
                   Disconnect
