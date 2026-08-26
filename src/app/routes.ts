@@ -32,6 +32,14 @@ export default [
   route('api/wallet/withdrawals', './api/wallet/withdrawals/route.js'),
   route('api/events', './api/events/route.js'),
   route('api/wallet/transactions', './api/wallet/transactions/route.js'),
+  route('api/autosave/enable', './api/autosave/enable/route.js'),
+  route('api/autosave/confirm', './api/autosave/confirm/route.js'),
+  route('api/autosave/state', './api/autosave/state/route.js'),
+  route('api/autosave/disable', './api/autosave/disable/route.js'),
+  route('api/autosave/confirm-disable', './api/autosave/confirm-disable/route.js'),
+  route('api/tipsplit/state', './api/tipsplit/state/route.js'),
+  route('api/tipsplit/save', './api/tipsplit/save/route.js'),
+  route('api/livestream/toggle', './api/livestream/toggle/route.js'),
   // Must sit last before the catch-all: every fixed route wins over a
   // username, and reserved_handles blocks anyone claiming one.
   route(':username', './tip/[username]/page.jsx', { id: 'username-short' }),

@@ -93,6 +93,26 @@ export function usdcToWeiHex(usdcAmount) {
 // Verify a tip transaction actually happened on-chain before trusting it.
 // Without this, anyone could POST a made-up txHash/amount and have it
 // recorded as a real tip with nothing actually moving on-chain.
+// Did a transaction land successfully? A plain receipt check with no tip-shape
+// validation -- used by paths like auto-save where the transaction is a
+// contract call, not a tip, so verifyArcTransaction's Tipped/amount checks
+// don't apply.
+export async function getTransactionSucceeded(txHash) {
+  const res = await fetch(ARC_CONFIG.rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "eth_getTransactionReceipt",
+      params: [txHash],
+      id: 1,
+    }),
+  });
+  const data = await res.json();
+  const receipt = data.result;
+  return Boolean(receipt && receipt.status === "0x1");
+}
+
 export async function verifyArcTransaction(
   txHash,
   expectedTo,

@@ -19,7 +19,8 @@ function uuid() {
 }
 
 async function circleFetch(path, { method = "GET", userToken, body } = {}) {
-  const key = process.env.CIRCLE_API_KEY || "";
+  const key = process.env.CIRCLE_API_KEY;
+  if (!key) throw new Error("CIRCLE_API_KEY is not set");
   const headers = {
     Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",
@@ -100,6 +101,30 @@ export async function createTransferChallenge(
       destinationAddress,
       amounts: [String(amount)],
       tokenId,
+      feeLevel: "MEDIUM",
+    },
+  });
+  return data?.data?.challengeId || null;
+}
+
+/// Creates a contract-execution challenge. Same envelope as a transfer, but
+/// the wallet calls a contract with pre-encoded callData instead of moving a
+/// balance. Used for the auto-save batch: one aggregate3 through Multicall3From
+/// carrying approve + Permit2.approve + registerRule, so the creator approves
+/// three actions with one signature and msg.sender stays the creator's wallet.
+/// callData must be fully encoded by the caller (server-side, via ethers).
+export async function createContractExecutionChallenge(
+  userToken,
+  { walletId, contractAddress, callData },
+) {
+  const data = await circleFetch("/user/transactions/contractExecution", {
+    method: "POST",
+    userToken,
+    body: {
+      idempotencyKey: uuid(),
+      walletId,
+      contractAddress,
+      callData,
       feeLevel: "MEDIUM",
     },
   });

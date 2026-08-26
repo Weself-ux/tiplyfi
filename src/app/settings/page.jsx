@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import useSession from "../../utils/useSession";
+import AutoSaveCard from "../dashboard/AutoSaveCard";
+import TipSplitCard from "./TipSplitCard";
 
 const CURRENCIES = [
   { code: "USD", label: "US Dollar" },
@@ -297,14 +299,22 @@ export default function SettingsPage() {
         </Section>
 
         <Section title="Automation">
-          <SoonRow label="Auto-save a share of every tip" />
+          <div className="pb-4 mb-2 border-b border-[#F3F4F6]">
+            <p className="text-sm font-medium text-[#111827] mb-3">
+              Auto-save a share of every tip
+            </p>
+            <AutoSaveCard />
+          </div>
           <SoonRow label="Auto-withdraw above a threshold" />
+        </Section>
+
+        <Section title="Tip split">
+          <TipSplitCard />
         </Section>
 
         <Section title="Integrations">
           <SoonRow label="Embedded tip widget" />
           <SoonRow label="Recurring tips" />
-          <SoonRow label="Tip split" />
           <SoonRow label="Live stream mode" />
           <SoonRow label="Creator API" />
         </Section>

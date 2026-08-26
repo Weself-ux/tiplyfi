@@ -323,6 +323,10 @@ export default function SignupPage() {
                   className="flex-1 px-1 py-3.5 bg-transparent font-mono-t text-sm text-white placeholder:text-[rgba(139,138,165,0.5)] min-w-0"
                 />
               </div>
+              <p className="text-xs text-[var(--violet-lo)] mb-1.5">
+                Use the name your fans already know you by — on Twitch,
+                TikTok, X, wherever they found you.
+              </p>
               <p className="text-xs text-[rgba(139,138,165,0.7)] mb-6">
                 Letters, numbers and underscores. This can't be changed later.
               </p>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
 import Logo from "../utils/Logo";
 import Atmosphere from "../utils/Atmosphere";
+import SectionBg from "../utils/SectionBg";
 import { track } from "../utils/track";
 
 /// Pulls the button a few pixels toward the cursor. CSS does the movement;
@@ -49,20 +50,23 @@ function useReveal() {
   return [ref, seen];
 }
 
-function Section({ children, className = "" }) {
+function Section({ children, className = "", tone = "none", tonePosition = "center" }) {
   const [ref, seen] = useReveal();
   return (
-    <section
-      ref={ref}
-      className={`max-w-[1180px] mx-auto px-6 ${className}`}
-      style={{
-        opacity: seen ? 1 : 0,
-        transform: seen ? "translateY(0)" : "translateY(28px)",
-        transition: "opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo)",
-      }}
-    >
-      {children}
-    </section>
+    <div className="relative">
+      <SectionBg tone={tone} position={tonePosition} />
+      <section
+        ref={ref}
+        className={`relative max-w-[1180px] mx-auto px-6 ${className}`}
+        style={{
+          opacity: seen ? 1 : 0,
+          transform: seen ? "translateY(0)" : "translateY(28px)",
+          transition: "opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo)",
+        }}
+      >
+        {children}
+      </section>
+    </div>
   );
 }
 
@@ -285,7 +289,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── The claim nobody else can make ──────────────────────── */}
-      <Section className="py-24">
+      <Section className="py-24" tone="azure" tonePosition="right">
         <p className="eyebrow text-[var(--muted)] mb-5">Built so we can't</p>
         <h2 className="display-lg text-white text-[clamp(1.9rem,3.6vw,2.9rem)] max-w-[620px]">
           Other platforms promise they won't touch your money.
@@ -400,7 +404,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── Steps ───────────────────────────────────────────────── */}
-      <Section className="py-24">
+      <Section className="py-24" tone="settle" tonePosition="left">
         <p className="eyebrow text-[var(--muted)] mb-5">Three steps</p>
         <div className="grid md:grid-cols-3 gap-5">
           {[
@@ -487,7 +491,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── Close ───────────────────────────────────────────────── */}
-      <Section className="py-28 text-center">
+      <Section className="py-28 text-center" tone="mix" tonePosition="full">
         <h2 className="display-xl text-white text-[clamp(2.2rem,5vw,3.8rem)] max-w-[760px] mx-auto">
           Your link is waiting.
         </h2>

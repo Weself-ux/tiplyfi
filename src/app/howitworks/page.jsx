@@ -1,6 +1,7 @@
 import { ArrowRight, Check } from "lucide-react";
 import Atmosphere from "../../utils/Atmosphere";
 import Logo from "../../utils/Logo";
+import SectionBg from "../../utils/SectionBg";
 
 const CREATOR_STEPS = [
   {
@@ -73,7 +74,8 @@ export default function HowItWorks() {
         </p>
 
         {/* Creator */}
-        <section className="mt-20">
+        <section className="relative mt-20">
+          <SectionBg tone="violet" position="right" />
           <p className="eyebrow text-[var(--muted)] mb-6">For you</p>
           <div className="grid md:grid-cols-3 gap-5">
             {CREATOR_STEPS.map((s) => (
@@ -93,7 +95,8 @@ export default function HowItWorks() {
         </section>
 
         {/* Supporter */}
-        <section className="mt-16">
+        <section className="relative mt-16">
+          <SectionBg tone="azure" position="left" />
           <p className="eyebrow text-[var(--muted)] mb-6">For your supporters</p>
           <div className="grid md:grid-cols-3 gap-5">
             {FAN_STEPS.map((s) => (
@@ -111,7 +114,8 @@ export default function HowItWorks() {
         </section>
 
         {/* Under the hood */}
-        <section className="mt-20 grid lg:grid-cols-[42%_58%] gap-14 items-start">
+        <section className="relative mt-20 grid lg:grid-cols-[42%_58%] gap-14 items-start">
+          <SectionBg tone="settle" position="full" />
           <div>
             <p className="eyebrow text-[var(--muted)] mb-5">Under the hood</p>
             <h2 className="display-lg text-white text-[clamp(1.7rem,3.2vw,2.4rem)]">

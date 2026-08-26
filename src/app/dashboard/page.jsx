@@ -18,6 +18,7 @@ import {
   History,
 } from "lucide-react";
 import useSession from "../../utils/useSession";
+import TipQrCode from "./TipQrCode";
 import Logo from "../../utils/Logo";
 import { track } from "../../utils/track";
 import {
@@ -649,16 +650,19 @@ export default function Dashboard() {
               their link to a bio on day one get their first tip far sooner.
             </p>
 
-            <div className="flex items-center gap-2 mb-4">
-              <code className="flex-1 font-mono-t text-[13px] text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-xl px-3 py-2.5 truncate">
-                {tipLink}
-              </code>
-              <button
-                onClick={copyLink}
-                className="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex-shrink-0"
-              >
-                {copied ? "Copied" : "Copy"}
-              </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 flex items-center gap-2">
+                <code className="flex-1 font-mono-t text-[13px] text-[#374151] bg-white/70 border border-[rgba(17,24,39,0.08)] rounded-xl px-3 py-2.5 truncate">
+                  {tipLink}
+                </code>
+                <button
+                  onClick={copyLink}
+                  className="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex-shrink-0"
+                >
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <TipQrCode link={tipLink} username={username} />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

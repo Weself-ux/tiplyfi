@@ -12,6 +12,13 @@ import {
 } from "../../../utils/arc-config";
 import WalletPicker from "../../../utils/WalletPicker";
 import { confirmTip, flushTipQueue } from "../../../utils/tipQueue";
+import { bridgeToArc, CCTP_SOURCE_CHAINS } from "../../../utils/cctp";
+import {
+  getUnifiedBalance,
+  depositToUnified,
+  spendToArc,
+  GATEWAY_DEPOSIT_CHAINS,
+} from "../../../utils/gateway";
 import Logo from "../../../utils/Logo";
 
 /// No loader: this codebase's layout plugin can't forward server-only route
@@ -52,12 +59,14 @@ const AMOUNTS = ["1", "5", "10", "25"];
 
 const NETWORKS = [
   { id: "arc", label: "Arc", available: true },
-  { id: "base", label: "Base", available: false },
-  { id: "polygon", label: "Polygon", available: false },
-  { id: "arbitrum", label: "Arbitrum", available: false },
-  { id: "op", label: "OP", available: false },
-  { id: "sepolia", label: "Ethereum", available: false },
-  { id: "avalanche", label: "Avalanche", available: false },
+  { id: "unified", label: "Unified", available: true },
+  { id: "base", label: "Base", available: true },
+  { id: "polygon", label: "Polygon", available: true },
+  { id: "arbitrum", label: "Arbitrum", available: true },
+  { id: "optimism", label: "OP", available: true },
+  { id: "sepolia", label: "Ethereum", available: true },
+  { id: "avalanche", label: "Avalanche", available: true },
+  { id: "unichain", label: "Unichain", available: true },
   { id: "solana", label: "Solana", available: false },
 ];
 
@@ -107,6 +116,8 @@ export default function TipPage({ params }) {
   const { username } = params;
   const [mode, setMode] = useState("wallet");
   const [network, setNetwork] = useState("arc");
+  const [depositChain, setDepositChain] = useState("base");
+  const [needsDeposit, setNeedsDeposit] = useState(false);
   const [wallet, setWallet] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [amount, setAmount] = useState("5");
@@ -198,6 +209,96 @@ export default function TipPage({ params }) {
 
     try {
       setLoading(true);
+
+      // Cross-chain pre-step: if the fan chose a non-Arc source chain, bridge
+      // their USDC to their own Arc address first, then the normal Arc tip runs
+      // below unchanged. The tip's 6% is taken by TipRouter on that Arc tip, so
+      // the fee routes correctly with no special cross-chain handling.
+      if (CCTP_SOURCE_CHAINS.includes(network)) {
+        const BRIDGE_TIMEOUT_MS = 5 * 60 * 1000;
+        try {
+          await Promise.race([
+            bridgeToArc({
+              provider: wallet.provider,
+              // Bridge the FULL tip value (tip total + any platform tip), not
+              // just gross -- the Arc tip below sends valueWei as msg.value, so
+              // the fan needs that much on Arc or the tip reverts.
+              networkId: network,
+              amountUsdc: weiToDisplay(amounts.valueWei),
+              onStep: (s) => setStatus(s),
+            }),
+            new Promise((_, reject) =>
+              setTimeout(
+                () =>
+                  reject(
+                    new Error(
+                      "The bridge is taking too long. Your funds are safe on " +
+                        "the source chain — try again shortly.",
+                    ),
+                  ),
+                BRIDGE_TIMEOUT_MS,
+              ),
+            ),
+          ]);
+        } catch (bridgeErr) {
+          setStatus(bridgeErr.message);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Unified (Circle Gateway). Two phases so the fan only picks a deposit
+      // chain when a deposit is actually needed:
+      //   - enough unified balance -> spend to their Arc address -> tip
+      //   - short -> halt, show the deposit-source picker; the fan picks a
+      //     chain and clicks again, which runs deposit -> spend -> tip
+      // Minting to the FAN (not the creator) routes the tip through TipRouter
+      // so the fee is taken.
+      if (network === "unified") {
+        const needed = Number(weiToDisplay(amounts.valueWei));
+        try {
+          if (!needsDeposit) {
+            setStatus("Checking your Gateway balance...");
+            const have = await getUnifiedBalance(wallet.address);
+            if (have < needed) {
+              // Not enough yet. Surface the deposit picker and stop; the fan's
+              // next click (with needsDeposit set) runs the deposit leg.
+              setNeedsDeposit(true);
+              setStatus("");
+              setLoading(false);
+              return;
+            }
+          }
+
+          if (needsDeposit) {
+            const have = await getUnifiedBalance(wallet.address);
+            const shortfall = Math.max(needed - have, 0);
+            if (shortfall > 0) {
+              setStatus(
+                `Depositing ${shortfall.toFixed(6)} USDC from ${depositChain}...`,
+              );
+              await depositToUnified({
+                provider: wallet.provider,
+                networkId: depositChain,
+                amountUsdc: shortfall.toFixed(6),
+                onStep: (s) => setStatus(s),
+              });
+            }
+          }
+
+          await spendToArc({
+            provider: wallet.provider,
+            amountUsdc: weiToDisplay(amounts.valueWei),
+            fanArcAddress: wallet.address,
+            onStep: (s) => setStatus(s),
+          });
+          setNeedsDeposit(false);
+        } catch (gwErr) {
+          setStatus(gwErr.message);
+          setLoading(false);
+          return;
+        }
+      }
 
       setStatus("Preparing...");
       try {
@@ -524,6 +625,12 @@ export default function TipPage({ params }) {
             {!wallet && (
               <div className="mb-4">
                 <p className="eyebrow text-[var(--muted)] mb-2">Network</p>
+                {network === "unified" && (
+                  <p className="text-[11px] text-[var(--muted)] mb-2 leading-relaxed">
+                    Choose Unified and deposit across any supported chain to tip from your Circle Gateway balance — and the creator
+                    receives it as USDC on Arc.
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {NETWORKS.map((n) => (
                     <button
@@ -703,6 +810,38 @@ export default function TipPage({ params }) {
             {status && (
               <div className="mb-4 px-3 py-2.5 text-[13px] text-red-300 bg-red-500/10 border border-red-500/25 rounded-lg break-words">
                 {status}
+              </div>
+            )}
+
+            {needsDeposit && (
+              <div className="mb-4 p-3 rounded-lg border border-[var(--line)] bg-white/[0.02]">
+                <p className="text-[13px] text-white mb-1">
+                  Top up your Gateway balance
+                </p>
+                <p className="text-[11px] text-[var(--muted)] mb-3 leading-relaxed">
+                  You don't have enough unified USDC yet. Pick a chain you hold
+                  USDC on — we'll deposit the difference, then send your tip.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {GATEWAY_DEPOSIT_CHAINS.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setDepositChain(c.id)}
+                      className={`px-2.5 py-1 text-[11px] font-medium rounded-md border transition-colors ${
+                        depositChain === c.id
+                          ? "text-white"
+                          : "text-[var(--muted)] border-[var(--line)] hover:text-white"
+                      }`}
+                      style={
+                        depositChain === c.id
+                          ? { borderColor: accent, background: `${accent}22` }
+                          : undefined
+                      }
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
