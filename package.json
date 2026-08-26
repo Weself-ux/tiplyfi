@@ -14,6 +14,7 @@
 		"@circle-fin/bridge-kit": "^1.13.0",
 		"@circle-fin/developer-controlled-wallets": "^10.6.0",
 		"@circle-fin/provider-cctp-v2": "^1.11.0",
+		"@circle-fin/unified-balance-kit": "^1.4.1",
 		"@circle-fin/user-controlled-wallets": "^10.8.0",
 		"@circle-fin/w3s-pw-web-sdk": "^1.1.11",
 		"@dnd-kit/core": "^6.3.1",
