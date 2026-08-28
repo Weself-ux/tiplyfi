@@ -10,11 +10,11 @@ export default function SectionBg({ tone = "none", position = "center" }) {
   const WASH = {
     // Hero: boldest moment, concentrated violet -- already handled by
     // Atmosphere's corner orbs, so this tone is intentionally unused there.
-    violet: "radial-gradient(circle, rgba(124,58,237,1.45) 0%, rgba(124,58,237,0) 70%)",
+    violet: "radial-gradient(circle, rgba(124,58,237,0.65) 0%, rgba(124,58,237,0) 70%)",
     // Fee comparison: cooler, "look closely at these numbers" register.
-    azure: "radial-gradient(circle, rgba(59,130,246,1.4) 0%, rgba(59,130,246,0) 70%)",
+    azure: "radial-gradient(circle, rgba(59,130,246,0.5) 0%, rgba(59,130,246,0) 70%)",
     // Three steps: the one section that earns --settle, the money-lands colour.
-    settle: "radial-gradient(circle, rgba(45,212,167,1.32) 0%, rgba(45,212,167,0) 70%)",
+    settle: "radial-gradient(circle, rgba(45,212,167,0.45) 0%, rgba(45,212,167,0) 70%)",
     // Close/CTA: mirrors the hero, bookending the page.
     mix: "linear-gradient(180deg, rgba(124,58,237,1.35) 0%, rgba(59,130,246,0.28) 100%)",
   };
