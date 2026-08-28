@@ -14,6 +14,7 @@
 
 import { BridgeKit } from "@circle-fin/bridge-kit";
 import { createViemAdapterFromProvider } from "@circle-fin/adapter-viem-v2";
+import { ensureChain } from "./chainSwitch";
 
 // Bridge Kit's own chain identifiers (verified against the installed types).
 const SOURCE_CHAINS = {
@@ -54,8 +55,12 @@ export async function bridgeToArc({ provider, networkId, amountUsdc, onStep }) {
     if (typeof onStep === "function") onStep(s);
   };
 
+  step(`Switching your wallet to ${networkId}...`);
+  // Bridge Kit does NOT switch networks itself -- it wraps whatever chain the
+  // provider is already on. Must switch before the adapter is created.
+  await ensureChain(provider, sourceChain);
+
   step("Preparing your wallet...");
-  // One adapter serves both chains. Bridge Kit switches networks as needed.
   const adapter = await createViemAdapterFromProvider({ provider });
 
   const kit = new BridgeKit();

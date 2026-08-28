@@ -82,23 +82,25 @@ export async function action({ request }) {
     }
 
     // Every co-host must already have a Tiplyfi account. A stranger can't be
-    // listed by name alone.
-    if (clean.length > 0) {
-      const usernames = clean.map((c) => c.username);
+    // listed by name alone. Checked one at a time -- the same single-param
+    // pattern every other route in this app already relies on, rather than
+    // an array-bound ANY($1) this driver's behaviour hasn't been confirmed
+    // for. At most 8 co-hosts, so the extra round trips cost nothing real.
+    const missing = [];
+    for (const c of clean) {
       const found = await sql(
-        `SELECT username FROM users WHERE lower(username) = ANY($1)`,
-        [usernames],
+        `SELECT id FROM users WHERE lower(username) = $1`,
+        [c.username],
       );
-      const foundSet = new Set(found.map((f) => f.username.toLowerCase()));
-      const missing = usernames.filter((u) => !foundSet.has(u));
-      if (missing.length > 0) {
-        return Response.json(
-          {
-            error: `${missing.join(", ")} ${missing.length > 1 ? "don't" : "doesn't"} have a Tiplyfi account yet.`,
-          },
-          { status: 400 },
-        );
-      }
+      if (found.length === 0) missing.push(c.username);
+    }
+    if (missing.length > 0) {
+      return Response.json(
+        {
+          error: `${missing.join(", ")} ${missing.length > 1 ? "don't" : "doesn't"} have a Tiplyfi account yet.`,
+        },
+        { status: 400 },
+      );
     }
 
     await sql("DELETE FROM stream_cohosts WHERE streamer_id = $1", [user.id]);

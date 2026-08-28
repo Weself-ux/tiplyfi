@@ -6,6 +6,23 @@
 import sql from "@/app/api/utils/sql";
 import { validateSession } from "@/app/api/utils/auth-helpers";
 
+export async function loader({ request }) {
+  try {
+    const user = await validateSession(request);
+    if (!user) {
+      return Response.json({ error: "Not authenticated." }, { status: 401 });
+    }
+    const rows = await sql(
+      "SELECT live_stream_enabled FROM users WHERE id = $1",
+      [user.id],
+    );
+    return Response.json({ enabled: rows[0]?.live_stream_enabled === true });
+  } catch (err) {
+    console.error("[livestream/toggle GET]", err);
+    return Response.json({ error: "Couldn't read state." }, { status: 500 });
+  }
+}
+
 export async function action({ request }) {
   try {
     const user = await validateSession(request);

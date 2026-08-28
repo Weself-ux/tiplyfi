@@ -17,18 +17,18 @@ const SOCIALS = [
   ["website", "Website"],
 ];
 
-/// Click to edit, blur to save. Renders as plain text until clicked, so the
-/// page reads the way a supporter sees it.
-function Editable({
+/// Always-visible labeled field. Blur commits, same as before -- just no
+/// click-to-reveal step. A label sits above every input, always.
+function LabeledField({
+  label,
   value,
   placeholder,
   onSave,
   multiline = false,
   maxLength = 200,
-  className = "",
-  inputClassName = "",
+  disabled = false,
+  hint = "",
 }) {
-  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value || "");
 
   useEffect(() => {
@@ -36,50 +36,36 @@ function Editable({
   }, [value]);
 
   function commit() {
-    setEditing(false);
-    if ((draft || "") !== (value || "")) onSave(draft);
-  }
-
-  if (!editing) {
-    return (
-      <button
-        onClick={() => setEditing(true)}
-        className={`group inline-flex items-start gap-1.5 text-left ${className}`}
-      >
-        <span className={value ? "" : "opacity-60 italic"}>
-          {value || placeholder}
-        </span>
-        <Pencil
-          size={12}
-          className="opacity-0 group-hover:opacity-60 mt-1 flex-shrink-0"
-        />
-      </button>
-    );
+    if (!disabled && (draft || "") !== (value || "")) onSave(draft);
   }
 
   const shared = {
-    autoFocus: true,
     value: draft,
     maxLength,
+    disabled,
+    placeholder,
     onChange: (e) => setDraft(e.target.value),
     onBlur: commit,
-    className: `w-full bg-white/95 text-[#111827] rounded-lg px-3 py-2 text-sm outline-none ${inputClassName}`,
+    className:
+      "w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] outline-none transition-colors focus:border-[#7c3aed] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]",
   };
 
-  return multiline ? (
-    <textarea rows={3} {...shared} />
-  ) : (
-    <input
-      type="text"
-      {...shared}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") commit();
-        if (e.key === "Escape") {
-          setDraft(value || "");
-          setEditing(false);
-        }
-      }}
-    />
+  return (
+    <div>
+      <label className="block text-xs font-medium text-[#6B7280] mb-1.5">
+        {label}
+      </label>
+      {multiline ? (
+        <textarea rows={4} {...shared} />
+      ) : (
+        <input
+          type="text"
+          {...shared}
+          onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
+        />
+      )}
+      {hint && <p className="mt-1 text-[11px] text-[#9CA3AF]">{hint}</p>}
+    </div>
   );
 }
 
@@ -185,7 +171,7 @@ export default function ProfilePage() {
   return (
     <div className="page-light">
       <nav className="nav-light sticky top-0 z-50">
-        <div className="max-w-[560px] mx-auto px-6 flex items-center gap-3 h-14">
+        <div className="max-w-[980px] mx-auto px-6 flex items-center gap-3 h-14">
           <button
             onClick={() => (window.location.href = "/dashboard")}
             className="text-[#6B7280] hover:text-[#111827] transition-colors"
@@ -193,173 +179,196 @@ export default function ProfilePage() {
             <ArrowLeft size={18} />
           </button>
           <span className="display-md text-[17px] text-[#111827]">Your page</span>
+          <div
+            className={`ml-auto flex items-center gap-1.5 text-sm font-medium transition-opacity duration-500 ${
+              saved ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ color: "var(--violet)" }}
+          >
+            <Check size={14} /> Saved
+          </div>
         </div>
       </nav>
 
-      <div className="max-w-[560px] mx-auto px-6 py-8">
-        <p className="text-sm text-[#6B7280] mb-4">
-          This is how supporters see you. Click anything to edit it.
-        </p>
-
-        {/* Mirrors the supporter-facing header on /:username */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden mb-6">
-          <div
-            className="px-8 py-7 text-center"
-            style={{ background: `linear-gradient(90deg, ${accent}, #3b82f6)` }}
+      <div className="max-w-[980px] mx-auto px-6 py-8">
+        <div
+          className="rounded-2xl overflow-hidden mb-6 flex items-center gap-4 px-6 py-4"
+          style={{ background: `linear-gradient(90deg, ${accent}, #3b82f6)` }}
+        >
+          <div className="w-11 h-11 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
+            {initial}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-white font-semibold text-sm truncate">
+              {profile.displayName || user.fullName || user.username}
+            </p>
+            <p className="text-white/70 text-xs truncate">
+              @{user.username}
+              {profile.category ? ` · ${profile.category}` : ""}
+            </p>
+          </div>
+          <button
+            onClick={() => window.open(shortLink, "_blank", "noopener,noreferrer")}
+            className="flex-shrink-0 text-xs font-medium text-white bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-full transition-colors"
           >
+            View as supporter →
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-[240px_1fr] gap-6 items-start">
+          {/* Left rail — photo, always vertical */}
+          <div className="card p-6 flex flex-col items-center text-center">
+            <div
+              className="w-28 h-28 rounded-2xl flex items-center justify-center text-4xl font-bold text-white mb-4"
+              style={{ background: `linear-gradient(135deg, ${accent}, #3b82f6)` }}
+            >
+              {initial}
+            </div>
             <button
               onClick={() =>
                 alert("Profile photos are coming soon. Your initial is used for now.")
               }
-              className="w-16 h-16 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-2xl font-bold text-white mx-auto mb-3 backdrop-blur-sm hover:bg-white/30 transition-colors"
+              className="w-full py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:border-[#7c3aed] transition-colors mb-2"
             >
-              {initial}
+              Upload photo
             </button>
+            <span className="text-[11px] text-[#9CA3AF]">Coming soon</span>
 
-            <div className="display-md text-white text-xl">
-              <Editable
-                value={profile.displayName || user.fullName || ""}
-                placeholder="Your name"
-                onSave={(v) => save({ displayName: v })}
-                maxLength={50}
-                className="justify-center"
-              />
-            </div>
-            <p className="text-white/70 text-sm mt-0.5">@{user.username}</p>
-
-            <div className="mt-2">
-              <select
-                value={profile.category || ""}
-                onChange={(e) => save({ category: e.target.value })}
-                className="text-[11px] font-medium text-white bg-white/20 px-2.5 py-1 rounded-full outline-none cursor-pointer appearance-none text-center"
-              >
-                <option value="" className="text-[#111827]">
-                  Add a category
-                </option>
-                {categories.map((c) => (
-                  <option key={c} value={c} className="text-[#111827]">
-                    {c}
-                  </option>
+            <div className="w-full mt-6 pt-5 border-t border-[#F3F4F6]">
+              <p className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-3 text-left">
+                Accent colour
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ACCENTS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => save({ accentColor: c })}
+                    aria-label={c}
+                    className={`w-7 h-7 rounded-full transition-transform ${
+                      accent.toLowerCase() === c
+                        ? "ring-2 ring-offset-2 ring-[#111827] scale-110"
+                        : "hover:scale-105"
+                    }`}
+                    style={{ background: c }}
+                  />
                 ))}
-              </select>
+              </div>
             </div>
 
-            <div className="mt-3 max-w-[340px] mx-auto text-white/85 text-sm leading-relaxed">
-              <Editable
-                value={profile.bio}
-                placeholder="Tell supporters about yourself"
-                onSave={(v) => save({ bio: v })}
-                multiline
-                maxLength={280}
-                className="w-full justify-center"
-              />
+            <div className="w-full mt-6 pt-5 border-t border-[#F3F4F6] text-left">
+              <SoonRow label="Dark mode" />
             </div>
           </div>
 
-          <div className="px-6 py-5">
-            <p className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-3">
-              Links
-            </p>
-            {SOCIALS.map(([key, label]) => (
-              <Row key={key} label={label}>
-                <Editable
-                  value={socialLinks[key] || ""}
-                  placeholder="Add link"
-                  onSave={(v) => saveSocial(key, v)}
-                  className="max-w-[280px] truncate"
+          {/* Right — everything else, horizontal grid within each section */}
+          <div className="flex flex-col gap-4">
+            <div className="card p-6">
+              <h2 className="text-base font-semibold text-[#111827] mb-4">
+                Profile information
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <LabeledField
+                  label="Username"
+                  value={user.username}
+                  disabled
+                  hint="Set at signup, can't be changed."
                 />
-              </Row>
-            ))}
-          </div>
-        </div>
+                <LabeledField
+                  label="Display name"
+                  value={profile.displayName || user.fullName || ""}
+                  placeholder="Your name"
+                  onSave={(v) => save({ displayName: v })}
+                  maxLength={50}
+                />
+              </div>
+              <div className="mt-4">
+                <label className="block text-xs font-medium text-[#6B7280] mb-1.5">
+                  Category
+                </label>
+                <select
+                  value={profile.category || ""}
+                  onChange={(e) => save({ category: e.target.value })}
+                  className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] outline-none focus:border-[#7c3aed] transition-colors"
+                >
+                  <option value="">Add a category</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-4">
+                <LabeledField
+                  label="Bio"
+                  value={profile.bio}
+                  placeholder="Tell supporters about yourself"
+                  onSave={(v) => save({ bio: v })}
+                  multiline
+                  maxLength={280}
+                />
+              </div>
+            </div>
 
-        <div
-          className={`flex items-center justify-center gap-2 mb-5 transition-all duration-500 ${
-            saved ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
-          }`}
-        >
-          <span
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white"
-            style={{
-              background: "linear-gradient(120deg, var(--violet), var(--azure))",
-              boxShadow: "0 8px 24px -10px rgba(124,58,237,0.7)",
-            }}
-          >
-            <Check size={15} /> Saved
-          </span>
-        </div>
+            <div className="card p-6">
+              <h2 className="text-base font-semibold text-[#111827] mb-4">Links</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {SOCIALS.map(([key, label]) => (
+                  <LabeledField
+                    key={key}
+                    label={label}
+                    value={socialLinks[key] || ""}
+                    placeholder="Add link"
+                    onSave={(v) => saveSocial(key, v)}
+                  />
+                ))}
+              </div>
+            </div>
 
-        <div className="card p-6 mb-4">
-          <h2 className="text-base font-semibold text-[#111827] mb-4">
-            Appearance
-          </h2>
-          <p className="text-sm text-[#6B7280] mb-3">Accent colour</p>
-          <div className="flex flex-wrap gap-2 mb-1">
-            {ACCENTS.map((c) => (
-              <button
-                key={c}
-                onClick={() => save({ accentColor: c })}
-                aria-label={c}
-                className={`w-8 h-8 rounded-full transition-transform ${
-                  accent.toLowerCase() === c
-                    ? "ring-2 ring-offset-2 ring-[#111827] scale-110"
-                    : "hover:scale-105"
-                }`}
-                style={{ background: c }}
+            <div className="card p-6">
+              <h2 className="text-base font-semibold text-[#111827] mb-1">
+                Custom message
+              </h2>
+              <p className="text-sm text-[#6B7280] mb-3">
+                Shown to a supporter right after they tip you.
+              </p>
+              <LabeledField
+                label="Thank-you message"
+                value={profile.thankYouMessage}
+                placeholder="Tip Sent! 🎉"
+                onSave={(v) => save({ thankYouMessage: v })}
+                maxLength={200}
               />
-            ))}
-          </div>
-          <div className="mt-4">
-            <SoonRow label="Profile photo" />
-            <SoonRow label="Dark mode" />
-          </div>
-        </div>
+            </div>
 
-        <div className="card p-6 mb-4">
-          <h2 className="text-base font-semibold text-[#111827] mb-1">
-            Custom message
-          </h2>
-          <p className="text-sm text-[#6B7280] mb-3">
-            Shown to a supporter right after they tip you.
-          </p>
-          <div className="text-sm text-[#111827]">
-            <Editable
-              value={profile.thankYouMessage}
-              placeholder="Tip Sent! 🎉"
-              onSave={(v) => save({ thankYouMessage: v })}
-              maxLength={200}
-              className="w-full"
-              inputClassName="border border-[#E5E7EB]"
-            />
+            <div className="card p-6">
+              <h2 className="text-base font-semibold text-[#111827] mb-3">
+                Your link
+              </h2>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-sm text-[#374151] bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2.5 truncate">
+                  {shortLink}
+                </code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(shortLink);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1800);
+                  }}
+                  className="px-3 py-2.5 text-sm font-medium text-white bg-[#7c3aed] rounded-xl hover:bg-[#6d28d9] transition-colors flex items-center gap-1.5"
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <button
+                onClick={() => window.open(shortLink, "_blank", "noopener,noreferrer")}
+                className="mt-3 text-sm text-[#7c3aed] font-medium hover:text-[#6d28d9]"
+              >
+                View your page as a supporter →
+              </button>
+            </div>
           </div>
-        </div>
-
-        <div className="card p-6">
-          <h2 className="text-base font-semibold text-[#111827] mb-3">
-            Your link
-          </h2>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm text-[#374151] bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2.5 truncate">
-              {shortLink}
-            </code>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(shortLink);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1800);
-              }}
-              className="px-3 py-2.5 text-sm font-medium text-white bg-[#7c3aed] rounded-xl hover:bg-[#6d28d9] transition-colors flex items-center gap-1.5"
-            >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <button
-            onClick={() => window.open(shortLink, "_blank", "noopener,noreferrer")}
-            className="mt-3 text-sm text-[#7c3aed] font-medium hover:text-[#6d28d9]"
-          >
-            View your page as a supporter →
-          </button>
         </div>
       </div>
     </div>

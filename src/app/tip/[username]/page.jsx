@@ -15,7 +15,7 @@ import { confirmTip, flushTipQueue } from "../../../utils/tipQueue";
 import { bridgeToArc, CCTP_SOURCE_CHAINS } from "../../../utils/cctp";
 import {
   getUnifiedBalance,
-  depositToUnified,
+  depositMultiple,
   spendToArc,
   GATEWAY_DEPOSIT_CHAINS,
 } from "../../../utils/gateway";
@@ -116,8 +116,12 @@ export default function TipPage({ params }) {
   const { username } = params;
   const [mode, setMode] = useState("wallet");
   const [network, setNetwork] = useState("arc");
-  const [depositChain, setDepositChain] = useState("base");
   const [needsDeposit, setNeedsDeposit] = useState(false);
+  const [topUpMode, setTopUpMode] = useState("forTip"); // "forTip" | "standalone"
+  const [topUpEntries, setTopUpEntries] = useState([]);
+  const [entryChain, setEntryChain] = useState("base");
+  const [entryAmount, setEntryAmount] = useState("");
+  const [topUpDone, setTopUpDone] = useState(false);
   const [wallet, setWallet] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [amount, setAmount] = useState("5");
@@ -183,6 +187,62 @@ export default function TipPage({ params }) {
       });
     } catch {}
     setReportSent(true);
+  }
+
+  function addTopUpEntry() {
+    const amt = Number(entryAmount);
+    if (!(amt > 0)) {
+      setStatus("Enter a valid amount for that chain.");
+      return;
+    }
+    if (topUpEntries.some((e) => e.networkId === entryChain)) {
+      setStatus("That chain is already in your list — remove it first to change the amount.");
+      return;
+    }
+    setTopUpEntries([...topUpEntries, { networkId: entryChain, amount: amt }]);
+    setEntryAmount("");
+    setStatus("");
+  }
+
+  function removeTopUpEntry(networkId) {
+    setTopUpEntries(topUpEntries.filter((e) => e.networkId !== networkId));
+  }
+
+  const topUpTotal = topUpEntries.reduce((s, e) => s + Number(e.amount || 0), 0);
+
+  // Deposit-only: fund the Gateway balance now, tip whenever later. Reuses the
+  // same entries list and runner as the mid-tip top-up, just stops after the
+  // deposits instead of continuing into a tip.
+  async function handleStandaloneDeposit() {
+    if (!wallet) {
+      setStatus("Connect your wallet first.");
+      return;
+    }
+    if (topUpEntries.length === 0) {
+      setStatus("Add at least one chain to deposit from.");
+      return;
+    }
+    setLoading(true);
+    setStatus("");
+    try {
+      await depositMultiple({
+        provider: wallet.provider,
+        entries: topUpEntries,
+        onStep: (s) => setStatus(s),
+      });
+      setTopUpEntries([]);
+      setTopUpDone(true);
+      setStatus("");
+    } catch (err) {
+      if (err.succeeded?.length) {
+        setTopUpEntries((prev) =>
+          prev.filter((e) => !err.succeeded.includes(e.networkId)),
+        );
+      }
+      setStatus(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleWalletTip() {
@@ -270,20 +330,14 @@ export default function TipPage({ params }) {
             }
           }
 
-          if (needsDeposit) {
-            const have = await getUnifiedBalance(wallet.address);
-            const shortfall = Math.max(needed - have, 0);
-            if (shortfall > 0) {
-              setStatus(
-                `Depositing ${shortfall.toFixed(6)} USDC from ${depositChain}...`,
-              );
-              await depositToUnified({
-                provider: wallet.provider,
-                networkId: depositChain,
-                amountUsdc: shortfall.toFixed(6),
-                onStep: (s) => setStatus(s),
-              });
-            }
+          if (needsDeposit && topUpEntries.length > 0) {
+            setStatus("Depositing to your Gateway balance...");
+            await depositMultiple({
+              provider: wallet.provider,
+              entries: topUpEntries,
+              onStep: (s) => setStatus(s),
+            });
+            setTopUpEntries([]);
           }
 
           await spendToArc({
@@ -294,6 +348,11 @@ export default function TipPage({ params }) {
           });
           setNeedsDeposit(false);
         } catch (gwErr) {
+          if (gwErr.succeeded?.length) {
+            setTopUpEntries((prev) =>
+              prev.filter((e) => !gwErr.succeeded.includes(e.networkId)),
+            );
+          }
           setStatus(gwErr.message);
           setLoading(false);
           return;
@@ -625,12 +684,11 @@ export default function TipPage({ params }) {
             {!wallet && (
               <div className="mb-4">
                 <p className="eyebrow text-[var(--muted)] mb-2">Network</p>
-                {network === "unified" && (
-                  <p className="text-[11px] text-[var(--muted)] mb-2 leading-relaxed">
-                    Choose Unified and deposit across any supported chain to tip from your Circle Gateway balance — and the creator
-                    receives it as USDC on Arc.
-                  </p>
-                )}
+                <p className="text-[11px] text-[var(--muted)] mb-2 leading-relaxed">
+                  Choose Unified and deposit from any/all supported chain into your Circle
+                  Gateway balance, then tip from it — the creator always
+                  receives USDC on Arc.
+                </p>
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {NETWORKS.map((n) => (
                     <button
@@ -701,6 +759,141 @@ export default function TipPage({ params }) {
                   className="text-[11px] text-[var(--settle)] hover:underline"
                 >
                   Get testnet USDC
+                </button>
+              </div>
+            )}
+
+            {mode === "wallet" && wallet && network === "unified" && !needsDeposit && !topUpDone && (
+              <div className="mb-4 -mt-2 px-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTopUpMode("standalone");
+                    setNeedsDeposit(true);
+                    setStatus("");
+                  }}
+                  className="text-[11px] text-[var(--settle)] hover:underline"
+                >
+                  Just topping up? Add funds without tipping
+                </button>
+              </div>
+            )}
+
+            {needsDeposit && (
+              <div className="mb-4 glass rounded-lg p-3">
+                <p className="text-[12px] text-white font-medium mb-1">
+                  {topUpMode === "standalone"
+                    ? "Add to your Gateway balance"
+                    : "Top up your Gateway balance"}
+                </p>
+                <p className="text-[11px] text-[var(--muted)] mb-3">
+                  Deposit from as many chains as you hold USDC on — each is
+                  its own network switch and signature.
+                </p>
+
+                {topUpEntries.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mb-3">
+                    {topUpEntries.map((e) => {
+                      const label =
+                        GATEWAY_DEPOSIT_CHAINS.find((c) => c.id === e.networkId)
+                          ?.label || e.networkId;
+                      return (
+                        <div
+                          key={e.networkId}
+                          className="flex items-center justify-between bg-white/[0.04] rounded-md px-2.5 py-1.5"
+                        >
+                          <span className="text-[12px] text-white">
+                            {e.amount} USDC from {label}
+                          </span>
+                          <button
+                            onClick={() => removeTopUpEntry(e.networkId)}
+                            className="text-[11px] text-[var(--muted)] hover:text-white"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <p className="text-[11px] text-[var(--muted)] pt-0.5">
+                      Total queued: {topUpTotal.toFixed(2)} USDC
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-1.5 mb-3">
+                  <select
+                    value={entryChain}
+                    onChange={(e) => setEntryChain(e.target.value)}
+                    className="flex-1 bg-white/[0.04] border border-[var(--line)] rounded-md px-2 py-1.5 text-[12px] text-white"
+                  >
+                    {GATEWAY_DEPOSIT_CHAINS.filter(
+                      (c) => !topUpEntries.some((e) => e.networkId === c.id),
+                    ).map((c) => (
+                      <option key={c.id} value={c.id} className="bg-[var(--ink)]">
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    value={entryAmount}
+                    onChange={(e) =>
+                      setEntryAmount(e.target.value.replace(/[^0-9.]/g, ""))
+                    }
+                    placeholder="Amount"
+                    className="w-24 bg-white/[0.04] border border-[var(--line)] rounded-md px-2 py-1.5 text-[12px] text-white"
+                  />
+                  <button
+                    onClick={addTopUpEntry}
+                    className="px-3 py-1.5 text-[12px] font-semibold text-white rounded-md border border-[var(--line)] hover:border-[rgba(255,255,255,0.22)]"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setNeedsDeposit(false);
+                      setTopUpEntries([]);
+                      setStatus("");
+                    }}
+                    className="flex-1 py-2 text-[12px] font-medium text-[var(--muted)] rounded-lg border border-[var(--line)]"
+                  >
+                    Cancel
+                  </button>
+                  {topUpMode === "standalone" ? (
+                    <button
+                      onClick={handleStandaloneDeposit}
+                      disabled={loading || topUpEntries.length === 0}
+                      className="flex-[2] py-2 text-[12px] font-bold text-white rounded-lg disabled:opacity-50"
+                      style={{ background: accent }}
+                    >
+                      {loading ? "Depositing..." : "Deposit to Gateway"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleWalletTip}
+                      disabled={loading || topUpEntries.length === 0}
+                      className="flex-[2] py-2 text-[12px] font-bold text-white rounded-lg disabled:opacity-50"
+                      style={{ background: accent }}
+                    >
+                      {loading ? "Working..." : "Deposit & Tip"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {topUpDone && (
+              <div className="mb-4 flex items-center justify-between bg-[rgba(45,212,167,0.1)] border border-[rgba(45,212,167,0.3)] rounded-lg px-3 py-2">
+                <span className="text-[12px] text-[var(--settle)]">
+                  Added to your Gateway balance. Tip whenever you're ready.
+                </span>
+                <button
+                  onClick={() => setTopUpDone(false)}
+                  className="text-[11px] text-[var(--muted)] hover:text-white"
+                >
+                  Dismiss
                 </button>
               </div>
             )}

@@ -662,7 +662,7 @@ export default function Dashboard() {
                   {copied ? "Copied" : "Copy"}
                 </button>
               </div>
-              <TipQrCode link={tipLink} username={username} />
+              <TipQrCode link={tipLink} username={user.username} />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

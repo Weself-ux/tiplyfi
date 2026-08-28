@@ -18,6 +18,7 @@
 
 import { UnifiedBalanceKit } from "@circle-fin/unified-balance-kit";
 import { createViemAdapterFromProvider } from "@circle-fin/adapter-viem-v2";
+import { ensureChain } from "./chainSwitch";
 
 // Testnet chains a fan can deposit USDC from, into their unified balance. EVM
 // only -- these pair with an injected browser wallet. Solana needs a different
@@ -79,6 +80,9 @@ export async function depositToUnified({
   if (!(Number(amountUsdc) > 0)) throw new Error("Enter a valid amount.");
 
   const step = (s) => typeof onStep === "function" && onStep(s);
+  step(`Switching your wallet to ${networkId}...`);
+  await ensureChain(provider, chain);
+
   step("Preparing your wallet...");
   const adapter = await createViemAdapterFromProvider({ provider });
 
@@ -98,6 +102,37 @@ export async function depositToUnified({
     }
     throw new Error(`Couldn't deposit: ${msg}`);
   }
+}
+
+/// Runs a list of deposits in sequence -- one per {networkId, amount} entry.
+/// Each is its own chain switch and signature; Gateway has no way to pull from
+/// two chains in one signed action, so "top up from multiple chains" is
+/// genuinely multiple deposits, done one after another. onStep reports which
+/// one is running so the fan sees real progress, not a stall.
+export async function depositMultiple({ provider, entries, onStep }) {
+  const succeeded = [];
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    try {
+      await depositToUnified({
+        provider,
+        networkId: e.networkId,
+        amountUsdc: e.amount,
+        onStep: (s) =>
+          typeof onStep === "function" &&
+          onStep(`(${i + 1}/${entries.length}) ${s}`),
+      });
+      succeeded.push(e.networkId);
+    } catch (err) {
+      // Stop rather than skip ahead -- but attach what already succeeded so
+      // the caller removes exactly those from the retry queue. Without this,
+      // a retry re-runs everything, including deposits that already landed.
+      const error = new Error(err.message);
+      error.succeeded = succeeded;
+      throw error;
+    }
+  }
+  return { succeeded };
 }
 
 /// Spends from the fan's unified balance, minting USDC to their OWN Arc address.
